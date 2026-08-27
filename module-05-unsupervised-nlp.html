@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 05 — Unsupervised Learning &amp; NLP</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+<nav class="rail">
+  <div class="rail-brand">AI / ML Roadmap</div>
+  <div class="rail-sub">7 modules · sequential path</div>
+  <div class="rail-module"><a href="index.html" data-n="—">Overview / Home</a></div>
+  <div class="rail-module"><a href="module-01-foundations.html" data-n="01">Foundations &amp; Feature Engineering</a></div>
+  <div class="rail-module"><a href="module-02-regression.html" data-n="02">Regression &amp; Optimization</a></div>
+  <div class="rail-module"><a href="module-03-classification.html" data-n="03">Classification Algorithms</a></div>
+  <div class="rail-module"><a href="module-04-tuning-ensemble.html" data-n="04">Tuning &amp; Ensemble Learning</a></div>
+  <div class="rail-module"><a href="module-05-unsupervised-nlp.html" class="active" data-n="05">Unsupervised Learning &amp; NLP</a></div>
+  <div class="rail-module"><a href="module-06-deep-learning-1.html" data-n="06">Deep Learning I — ANN</a></div>
+  <div class="rail-module"><a href="module-07-cnn.html" data-n="07">Deep Learning II — CNN</a></div>
+  <div class="rail-note">On this page: supervised vs. unsupervised · clustering &amp; its limits · DBSCAN · dimensionality reduction · the NLP pipeline · vectorization (One-Hot, BoW, TF-IDF).</div>
+</nav>
+<div class="main">
+  <div class="topbar"><span>MODULE 05 / 07</span><a href="index.html">← All modules</a></div>
+  <div class="content">
+    <div class="eyebrow">Module 05</div>
+    <h1 class="page-title">Unsupervised Learning &amp; NLP</h1>
+    <p class="page-dek">No labels this time. Here the model has to find its own structure in data — and we
+    apply that idea specifically to text, where "structure" means turning words into numbers.</p>
+
+    <section class="topic" id="unsupervised-vs-supervised">
+      <h2 class="topic-title"><span class="tnum">5.1</span> Unsupervised vs. Supervised Learning</h2>
+      <table>
+        <tr><th></th><th>Supervised</th><th>Unsupervised</th></tr>
+        <tr><td>Data</td><td>Labeled (X, y)</td><td>Unlabeled (X only)</td></tr>
+        <tr><td>Goal</td><td>Predict a known target</td><td>Discover hidden structure/groups</td></tr>
+        <tr><td>Evaluation</td><td>Compare prediction vs. true label (accuracy, RMSE, etc.)</td><td>No ground truth — evaluated indirectly (e.g. cluster cohesion, silhouette score)</td></tr>
+        <tr><td>Examples</td><td>Spam detection, price prediction</td><td>Customer segmentation, anomaly detection, topic discovery</td></tr>
+      </table>
+    </section>
+
+    <section class="topic" id="clustering">
+      <h2 class="topic-title"><span class="tnum">5.2</span> Clustering</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Clustering groups data points so that points in the same group (cluster) are more similar to each
+        other than to points in other groups, based purely on feature similarity/distance — no labels involved.
+      </div>
+
+      <h3>K-Means — the standard process</h3>
+      <ol>
+        <li>Choose the number of clusters, K.</li>
+        <li>Randomly initialize K "centroids" (cluster centers).</li>
+        <li>Assign every point to its nearest centroid.</li>
+        <li>Recompute each centroid as the mean of the points assigned to it.</li>
+        <li>Repeat steps 3–4 until centroids stop moving (convergence).</li>
+      </ol>
+
+      <figure>
+        <svg viewBox="0 0 420 200" xmlns="http://www.w3.org/2000/svg">
+          <g>
+          <circle cx="70" cy="60" r="5" fill="#1F7A6C"/><circle cx="90" cy="45" r="5" fill="#1F7A6C"/><circle cx="60" cy="90" r="5" fill="#1F7A6C"/><circle cx="100" cy="80" r="5" fill="#1F7A6C"/>
+          <circle cx="80" cy="68" r="9" fill="none" stroke="#1F7A6C" stroke-width="2"/>
+          <circle cx="250" cy="60" r="5" fill="#B2661E"/><circle cx="280" cy="50" r="5" fill="#B2661E"/><circle cx="260" cy="95" r="5" fill="#B2661E"/>
+          <circle cx="263" cy="68" r="9" fill="none" stroke="#B2661E" stroke-width="2"/>
+          <circle cx="160" cy="150" r="5" fill="#AC4638"/><circle cx="190" cy="170" r="5" fill="#AC4638"/><circle cx="150" cy="180" r="5" fill="#AC4638"/><circle cx="200" cy="150" r="5" fill="#AC4638"/>
+          <circle cx="175" cy="163" r="12" fill="none" stroke="#AC4638" stroke-width="2"/>
+          </g>
+        </svg>
+        <figcaption>Three clusters, each with a centroid (ringed) — the mean position of its member points.</figcaption>
+      </figure>
+
+      <pre class="code"><span class="k">from</span> sklearn.cluster <span class="k">import</span> KMeans
+model = KMeans(n_clusters=<span class="s">3</span>, n_init=<span class="s">10</span>)
+labels = model.fit_predict(X)  <span class="c"># scale X first — K-Means is distance-based</span></pre>
+
+      <h3>Choosing K: the Elbow Method</h3>
+      <p>Plot "within-cluster sum of squares" (inertia) against different values of K — the point where the
+      curve bends like an elbow is a reasonable choice for K.</p>
+
+      <div class="adv-grid">
+        <div class="adv-col good"><h4>Advantages of clustering</h4><ul><li>No labels needed — cheap to apply to raw data</li><li>Reveals structure you didn't know to look for</li><li>Fast (K-Means scales well)</li></ul></div>
+        <div class="adv-col bad"><h4>Disadvantages / limitations</h4><ul><li>You must choose K in advance (K-Means)</li><li>Assumes roughly spherical, similar-sized clusters — struggles with irregular shapes</li><li>Sensitive to feature scale and outliers</li><li>No ground truth to check "correctness" against</li><li>Results can vary with random centroid initialization</li></ul></div>
+      </div>
+    </section>
+
+    <section class="topic" id="dbscan">
+      <h2 class="topic-title"><span class="tnum">5.3</span> DBSCAN</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        DBSCAN (Density-Based Spatial Clustering) groups points that are closely packed together (high
+        density), and marks points in low-density regions as <strong>noise/outliers</strong> — unlike
+        K-Means, it does <em>not</em> require you to specify the number of clusters in advance, and it can find arbitrarily shaped clusters.
+      </div>
+      <ul>
+        <li><strong>ε (epsilon)</strong> — the radius to search around each point for neighbors.</li>
+        <li><strong>MinPts</strong> — the minimum number of neighbors within ε required for a point to be a "core point".</li>
+        <li>Core points close to each other get chained into the same cluster; points too far from any core point become <strong>noise</strong>.</li>
+      </ul>
+      <pre class="code"><span class="k">from</span> sklearn.cluster <span class="k">import</span> DBSCAN
+model = DBSCAN(eps=<span class="s">0.5</span>, min_samples=<span class="s">5</span>)
+labels = model.fit_predict(X)  <span class="c"># label -1 means "noise / outlier"</span></pre>
+      <div class="adv-grid">
+        <div class="adv-col good"><h4>Advantages</h4><ul><li>Finds arbitrarily-shaped clusters</li><li>Doesn't require choosing K</li><li>Naturally identifies outliers/noise</li></ul></div>
+        <div class="adv-col bad"><h4>Disadvantages</h4><ul><li>Sensitive to ε and MinPts choices</li><li>Struggles when clusters have very different densities</li></ul></div>
+      </div>
+    </section>
+
+    <section class="topic" id="dim-reduction">
+      <h2 class="topic-title"><span class="tnum">5.4</span> Dimensionality Reduction</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Compressing a dataset with many features into fewer "components" while retaining as much important
+        information (variance) as possible — used for visualization, speeding up training, and fighting the
+        curse of dimensionality.
+      </div>
+      <p><strong>PCA (Principal Component Analysis)</strong> is the standard technique: it finds new axes
+      (principal components) that are linear combinations of the original features, ordered by how much
+      variance in the data they capture. Keeping just the first 2–3 components often preserves most of the signal.</p>
+      <pre class="code"><span class="k">from</span> sklearn.decomposition <span class="k">import</span> PCA
+pca = PCA(n_components=<span class="s">2</span>)
+X_reduced = pca.fit_transform(X_scaled)  <span class="c"># scale first — PCA is variance-based</span>
+print(pca.explained_variance_ratio_)     <span class="c"># % of information kept per component</span></pre>
+      <div class="box box-warn">
+        <div class="box-title">Trade-off</div>
+        You gain speed and can visualize high-dimensional data in 2D/3D, but the new components are
+        combinations of original features and lose direct interpretability — you can no longer say
+        "feature X mattered," only "component 1 mattered."
+      </div>
+    </section>
+
+    <!-- ===================== NLP ===================== -->
+    <section class="topic" id="nlp-approach">
+      <h2 class="topic-title"><span class="tnum">5.5</span> Approach to NLP (Natural Language Processing)</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        NLP is the field of getting computers to work with human language. Since ML models only understand
+        numbers, the entire NLP pipeline is about responsibly turning messy text into clean numeric vectors
+        without losing the meaning that matters for the task.
+      </div>
+
+      <h3>The NLP Pipeline</h3>
+      <ol>
+        <li><strong>Getting data</strong> — scraping, APIs, existing text corpora, user-generated content.</li>
+        <li><strong>Text cleaning</strong> — lowercasing, removing punctuation/HTML tags/special characters, removing stopwords ("the", "is", "and"), stemming/lemmatization (reducing words to their root form).</li>
+        <li><strong>Tokenization</strong> — splitting text into words or sub-word units.</li>
+        <li><strong>Vectorization</strong> — converting tokens into numeric vectors (below).</li>
+        <li><strong>Modeling</strong> — feeding vectors into a classifier/regressor/neural network.</li>
+      </ol>
+
+      <div class="code-label">Python — text cleaning</div>
+      <pre class="code"><span class="k">import</span> re
+<span class="k">from</span> nltk.corpus <span class="k">import</span> stopwords
+<span class="k">from</span> nltk.stem <span class="k">import</span> WordNetLemmatizer
+
+<span class="k">def</span> clean_text(text):
+    text = text.lower()
+    text = re.sub(<span class="s">r"[^a-z\s]"</span>, <span class="s">""</span>, text)               <span class="c"># strip punctuation/numbers</span>
+    words = [w <span class="k">for</span> w <span class="k">in</span> text.split() <span class="k">if</span> w <span class="k">not in</span> stopwords.words(<span class="s">"english"</span>)]
+    lemmatizer = WordNetLemmatizer()
+    <span class="k">return</span> <span class="s">" "</span>.join(lemmatizer.lemmatize(w) <span class="k">for</span> w <span class="k">in</span> words)</pre>
+    </section>
+
+    <section class="topic" id="vectorization">
+      <h2 class="topic-title"><span class="tnum">5.6</span> Vectorization</h2>
+
+      <h3>One-Hot Encoding (for text)</h3>
+      <p>Every unique word in the vocabulary gets its own column; a sentence is represented by marking
+      which words are present. Extremely sparse and ignores word order/frequency — rarely used alone in
+      modern NLP, but foundational to understand.</p>
+
+      <h3>Bag of Words (BoW)</h3>
+      <p>Represents each document as a vector of <strong>word counts</strong> — like one-hot but keeping
+      frequency information. Ignores grammar and word order entirely (hence "bag").</p>
+      <pre class="code"><span class="k">from</span> sklearn.feature_extraction.text <span class="k">import</span> CountVectorizer
+vectorizer = CountVectorizer()
+X = vectorizer.fit_transform(documents)  <span class="c"># rows = docs, columns = vocabulary word counts</span></pre>
+
+      <h3>TF-IDF (Term Frequency – Inverse Document Frequency)</h3>
+      <p>Improves on BoW by down-weighting words that appear in <em>many</em> documents (like "the", which
+      carries little distinguishing information) and up-weighting words that are frequent in a specific
+      document but rare across the corpus (more informative).</p>
+      <div class="math">
+        TF-IDF(t, d) = TF(t, d) × IDF(t)
+        <div class="step">TF(t,d) = (count of term t in document d) / (total terms in d)</div>
+        <div class="step">IDF(t) = log( total documents / documents containing t )</div>
+      </div>
+      <pre class="code"><span class="k">from</span> sklearn.feature_extraction.text <span class="k">import</span> TfidfVectorizer
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(documents)</pre>
+
+      <table>
+        <tr><th>Method</th><th>Captures frequency?</th><th>Down-weights common words?</th><th>Captures order?</th></tr>
+        <tr><td>One-Hot</td><td>No (binary presence)</td><td>No</td><td>No</td></tr>
+        <tr><td>Bag of Words</td><td>Yes</td><td>No</td><td>No</td></tr>
+        <tr><td>TF-IDF</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+      </table>
+
+      <div class="box box-tip">
+        <div class="box-title">Beyond this module</div>
+        None of these methods capture word <em>meaning</em> or order — that's what word embeddings
+        (Word2Vec, GloVe) and transformer models (BERT, GPT) were built to solve, by learning dense vectors
+        where similar-meaning words end up close together.
+      </div>
+    </section>
+
+    <div class="module-nav">
+      <a href="module-04-tuning-ensemble.html"><span class="lbl">Back</span>Module 04</a>
+      <a href="module-06-deep-learning-1.html" style="text-align:right;"><span class="lbl">Next</span>Module 06 — Deep Learning I →</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<a href="https://buymemomo.com/vabin" class="momo-widget">
+  <img src="https://buymemomo.com/logo.png" alt="Buy me a momo" title="Buy me a momo">
+  <span class="momo-text">Buy me a momo</span>
+</a>
+</body>
+</html>

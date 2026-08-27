@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 03 — Classification Algorithms</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+<nav class="rail">
+  <div class="rail-brand">AI / ML Roadmap</div>
+  <div class="rail-sub">7 modules · sequential path</div>
+  <div class="rail-module"><a href="index.html" data-n="—">Overview / Home</a></div>
+  <div class="rail-module"><a href="module-01-foundations.html" data-n="01">Foundations &amp; Feature Engineering</a></div>
+  <div class="rail-module"><a href="module-02-regression.html" data-n="02">Regression &amp; Optimization</a></div>
+  <div class="rail-module"><a href="module-03-classification.html" class="active" data-n="03">Classification Algorithms</a></div>
+  <div class="rail-module"><a href="module-04-tuning-ensemble.html" data-n="04">Tuning &amp; Ensemble Learning</a></div>
+  <div class="rail-module"><a href="module-05-unsupervised-nlp.html" data-n="05">Unsupervised Learning &amp; NLP</a></div>
+  <div class="rail-module"><a href="module-06-deep-learning-1.html" data-n="06">Deep Learning I — ANN</a></div>
+  <div class="rail-module"><a href="module-07-cnn.html" data-n="07">Deep Learning II — CNN</a></div>
+  <div class="rail-note">On this page: logistic regression · sigmoid · log loss · confusion matrix &amp; metrics · KNN · Naive Bayes · Decision Trees · entropy &amp; information gain · SVM.</div>
+</nav>
+<div class="main">
+  <div class="topbar"><span>MODULE 03 / 07</span><a href="index.html">← All modules</a></div>
+  <div class="content">
+    <div class="eyebrow">Module 03 · Supervised Learning</div>
+    <h1 class="page-title">Classification Algorithms</h1>
+    <p class="page-dek">Predicting categories instead of numbers — from a straightforward probability model
+    (logistic regression) to distance-based, probabilistic, tree-based, and margin-based approaches.</p>
+
+    <section class="topic" id="logistic-regression">
+      <h2 class="topic-title"><span class="tnum">3.1</span> Logistic Regression</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Despite the name, logistic regression is a <strong>classification</strong> algorithm. It predicts the
+        <strong>probability</strong> that an input belongs to a class, by squashing a linear combination of
+        features through the sigmoid function.
+      </div>
+
+      <h3>Why not use linear regression for classification?</h3>
+      <p>A straight line can predict values below 0 or above 1, which makes no sense as a probability, and
+      it's very sensitive to outliers shifting the decision boundary. We need an S-shaped function that
+      always outputs between 0 and 1.</p>
+
+      <h3>The Sigmoid Activation Function</h3>
+      <div class="math">
+        σ(z) = 1 / (1 + e^(−z)),  where z = w·x + b
+        <div class="step">As z → +∞, σ(z) → 1. As z → −∞, σ(z) → 0. At z=0, σ(z)=0.5.</div>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 460 200" xmlns="http://www.w3.org/2000/svg">
+          <line x1="30" y1="170" x2="430" y2="170" stroke="#1B1D22"/>
+          <line x1="230" y1="170" x2="230" y2="20" stroke="#1B1D22"/>
+          <path d="M 40 160 C 120 160, 180 20, 230 95 S 340 20, 420 25" fill="none" stroke="#1F7A6C" stroke-width="2.5"/>
+          <line x1="30" y1="95" x2="430" y2="95" stroke="#ccc" stroke-dasharray="2,2"/>
+          <text x="440" y="99" font-family="IBM Plex Mono" font-size="10" fill="#54565f">0.5</text>
+          <text x="230" y="185" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#54565f">z = 0</text>
+          <text x="80" y="150" font-family="IBM Plex Mono" font-size="10" fill="#54565f">σ(z) → 0</text>
+          <text x="330" y="35" font-family="IBM Plex Mono" font-size="10" fill="#54565f">σ(z) → 1</text>
+        </svg>
+        <figcaption>The sigmoid curve — its S-shape maps any real number into the (0, 1) probability range.</figcaption>
+      </figure>
+
+      <p>The <strong>decision boundary</strong> is drawn where the model's linear function <code>z = w·x + b</code>
+      equals a threshold (usually σ(z)=0.5, i.e. z=0). Above it → predict class 1; below → predict class 0.</p>
+
+      <h3>Log Loss (Binary Cross-Entropy) — the cost function</h3>
+      <p>MSE doesn't work well here (it makes the cost surface non-convex with sigmoid). Instead we use
+      <strong>log loss</strong>, which heavily penalizes confident-and-wrong predictions.</p>
+      <div class="math">
+        J(w,b) = −(1/n) Σᵢ [ yᵢ·log(ŷᵢ) + (1−yᵢ)·log(1−ŷᵢ) ]
+        <div class="step">If the true label yᵢ=1 and the model predicts ŷᵢ close to 0 → −log(ŷᵢ) is huge (large penalty).</div>
+        <div class="step">If the prediction matches the true label confidently, the loss for that point → 0.</div>
+      </div>
+      <p>This cost is minimized with gradient descent, exactly as in Module 02.</p>
+
+      <pre class="code"><span class="k">from</span> sklearn.linear_model <span class="k">import</span> LogisticRegression
+model = LogisticRegression()
+model.fit(X_train, y_train)
+probs = model.predict_proba(X_test)   <span class="c"># probability per class</span>
+preds = model.predict(X_test)         <span class="c"># thresholded class label</span></pre>
+    </section>
+
+    <section class="topic" id="classification-metrics">
+      <h2 class="topic-title"><span class="tnum">3.2</span> Evaluating a Classifier</h2>
+
+      <h3>Confusion Matrix</h3>
+      <figure>
+        <svg viewBox="0 0 380 220" xmlns="http://www.w3.org/2000/svg">
+          <g font-family="IBM Plex Mono" font-size="12">
+          <rect x="90" y="40" width="130" height="70" fill="#E4F1EE" stroke="#1F7A6C"/>
+          <text x="155" y="70" text-anchor="middle" fill="#1F7A6C" font-weight="700">TP</text>
+          <text x="155" y="88" text-anchor="middle" fill="#54565f" font-size="9">True Positive</text>
+          <rect x="220" y="40" width="130" height="70" fill="#FAECE9" stroke="#AC4638"/>
+          <text x="285" y="70" text-anchor="middle" fill="#AC4638" font-weight="700">FP</text>
+          <text x="285" y="88" text-anchor="middle" fill="#54565f" font-size="9">False Positive</text>
+          <rect x="90" y="110" width="130" height="70" fill="#FAECE9" stroke="#AC4638"/>
+          <text x="155" y="140" text-anchor="middle" fill="#AC4638" font-weight="700">FN</text>
+          <text x="155" y="158" text-anchor="middle" fill="#54565f" font-size="9">False Negative</text>
+          <rect x="220" y="110" width="130" height="70" fill="#E4F1EE" stroke="#1F7A6C"/>
+          <text x="285" y="140" text-anchor="middle" fill="#1F7A6C" font-weight="700">TN</text>
+          <text x="285" y="158" text-anchor="middle" fill="#54565f" font-size="9">True Negative</text>
+          <text x="155" y="30" text-anchor="middle" fill="#54565f" font-size="10">Predicted: Yes</text>
+          <text x="285" y="30" text-anchor="middle" fill="#54565f" font-size="10">Predicted: No</text>
+          <text x="40" y="80" fill="#54565f" font-size="10">Actual: Yes</text>
+          <text x="40" y="150" fill="#54565f" font-size="10">Actual: No</text>
+          </g>
+        </svg>
+        <figcaption>The confusion matrix is the source table every classification metric below is computed from.</figcaption>
+      </figure>
+
+      <table>
+        <tr><th>Metric</th><th>Formula</th><th>Answers the question</th></tr>
+        <tr><td>Accuracy</td><td>(TP+TN) / (TP+TN+FP+FN)</td><td>Overall, what fraction did we get right? (misleading on imbalanced data)</td></tr>
+        <tr><td>Precision</td><td>TP / (TP+FP)</td><td>Of everything we flagged positive, how much was actually positive?</td></tr>
+        <tr><td>Recall (Sensitivity)</td><td>TP / (TP+FN)</td><td>Of all actual positives, how many did we catch?</td></tr>
+        <tr><td>F1 Score</td><td>2 · (Precision·Recall)/(Precision+Recall)</td><td>Harmonic mean — balances precision and recall in one number</td></tr>
+      </table>
+
+      <div class="box box-tip">
+        <div class="box-title">Precision vs. Recall — which matters more?</div>
+        Spam detection: false positives (good email marked spam) are costly → prioritize <strong>precision</strong>.
+        Cancer screening: missing a real case (false negative) is far worse than a false alarm → prioritize <strong>recall</strong>.
+      </div>
+
+      <pre class="code"><span class="k">from</span> sklearn.metrics <span class="k">import</span> confusion_matrix, classification_report
+print(confusion_matrix(y_test, preds))
+print(classification_report(y_test, preds))  <span class="c"># precision, recall, f1 in one call</span></pre>
+    </section>
+
+    <section class="topic" id="knn">
+      <h2 class="topic-title"><span class="tnum">3.3</span> K-Nearest Neighbors (KNN)</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        KNN classifies a new point by looking at the <strong>K closest points</strong> in the training data
+        (by distance, usually Euclidean) and taking a majority vote of their labels. It is a <strong>lazy
+        learner</strong> — it doesn't "train" a model; it just memorizes the data and computes at prediction time.
+      </div>
+      <div class="math">
+        distance(a, b) = √( Σᵢ (aᵢ − bᵢ)² )    <span class="step">— Euclidean distance</span>
+      </div>
+      <pre class="code"><span class="k">from</span> sklearn.neighbors <span class="k">import</span> KNeighborsClassifier
+model = KNeighborsClassifier(n_neighbors=<span class="s">5</span>)
+model.fit(X_train, y_train)  <span class="c"># scale features first — KNN is distance-based!</span></pre>
+      <div class="adv-grid">
+        <div class="adv-col good"><h4>Advantages</h4><ul><li>Simple, no training phase</li><li>Naturally handles multi-class problems</li><li>Non-linear decision boundaries</li></ul></div>
+        <div class="adv-col bad"><h4>Disadvantages</h4><ul><li>Slow at prediction time on large datasets</li><li>Sensitive to feature scale (must scale first)</li><li>Struggles in high dimensions ("curse of dimensionality")</li></ul></div>
+      </div>
+    </section>
+
+    <section class="topic" id="naive-bayes">
+      <h2 class="topic-title"><span class="tnum">3.4</span> Naive Bayes</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        A probabilistic classifier based on <strong>Bayes' Theorem</strong>, which assumes every feature is
+        conditionally independent of every other feature given the class — an assumption that's almost never
+        exactly true in reality (hence "naive"), yet the algorithm performs surprisingly well in practice, especially for text.
+      </div>
+      <div class="math">
+        P(class | features) = [ P(features | class) · P(class) ] / P(features)
+        <div class="step">We pick the class that maximizes P(class | features).</div>
+      </div>
+      <pre class="code"><span class="k">from</span> sklearn.naive_bayes <span class="k">import</span> MultinomialNB
+model = MultinomialNB()
+model.fit(X_train_counts, y_train)  <span class="c"># classic use-case: spam detection on word counts</span></pre>
+      <div class="adv-grid">
+        <div class="adv-col good"><h4>Advantages</h4><ul><li>Extremely fast to train and predict</li><li>Works well with high-dimensional data (text)</li><li>Needs relatively little training data</li></ul></div>
+        <div class="adv-col bad"><h4>Disadvantages</h4><ul><li>Independence assumption is usually false</li><li>Can be outperformed by more complex models when features are correlated</li></ul></div>
+      </div>
+    </section>
+
+    <section class="topic" id="decision-tree">
+      <h2 class="topic-title"><span class="tnum">3.5</span> Decision Trees</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        A decision tree splits the data repeatedly on feature thresholds (like a flowchart of yes/no
+        questions) until it reaches a "pure" group, or a stopping condition — the model is fully
+        interpretable by walking the tree.
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 460 220" xmlns="http://www.w3.org/2000/svg">
+          <g font-family="IBM Plex Sans" font-size="10.5">
+          <rect x="170" y="10" width="120" height="40" rx="4" fill="#E4F1EE" stroke="#1F7A6C"/>
+          <text x="230" y="34" text-anchor="middle">Age &lt; 30?</text>
+          <line x1="200" y1="50" x2="110" y2="90" stroke="#8992A6"/>
+          <line x1="260" y1="50" x2="350" y2="90" stroke="#8992A6"/>
+          <text x="140" y="75" font-size="9" fill="#54565f">Yes</text>
+          <text x="320" y="75" font-size="9" fill="#54565f">No</text>
+          <rect x="50" y="90" width="120" height="40" rx="4" fill="#FBF0E1" stroke="#B2661E"/>
+          <text x="110" y="114" text-anchor="middle">Income &gt; 40k?</text>
+          <rect x="290" y="90" width="120" height="40" rx="4" fill="#FAECE9" stroke="#AC4638"/>
+          <text x="350" y="114" text-anchor="middle">Reject Loan</text>
+          <line x1="80" y1="130" x2="40" y2="170" stroke="#8992A6"/>
+          <line x1="140" y1="130" x2="180" y2="170" stroke="#8992A6"/>
+          <rect x="0" y="170" width="90" height="36" rx="4" fill="#E4F1EE" stroke="#1F7A6C"/>
+          <text x="45" y="192" text-anchor="middle" font-size="9.5">Approve</text>
+          <rect x="140" y="170" width="90" height="36" rx="4" fill="#FAECE9" stroke="#AC4638"/>
+          <text x="185" y="192" text-anchor="middle" font-size="9.5">Reject</text>
+          </g>
+        </svg>
+        <figcaption>Each internal node asks a yes/no question about a feature; each leaf is a final prediction.</figcaption>
+      </figure>
+
+      <h3>How the tree decides what to split on: Entropy &amp; Information Gain</h3>
+      <div class="math">
+        Entropy(S) = − Σᵢ pᵢ · log₂(pᵢ)
+        <div class="step">pᵢ = proportion of class i in set S. Entropy = 0 when the set is pure (all one class);
+        entropy is maximum (1.0 for binary) when classes are perfectly mixed 50/50.</div>
+      </div>
+      <div class="math">
+        Information Gain = Entropy(parent) − Σ (|child|/|parent|) · Entropy(child)
+        <div class="step">The tree tries every possible feature/threshold split and picks the one with the
+        <strong>highest information gain</strong> — i.e. the split that makes the resulting groups purest.</div>
+      </div>
+
+      <h3>Steps to build a decision tree</h3>
+      <ol>
+        <li>Calculate entropy of the current node (before splitting).</li>
+        <li>For every feature and every possible threshold, calculate the information gain of splitting there.</li>
+        <li>Choose the split with maximum information gain.</li>
+        <li>Repeat recursively on each child node.</li>
+        <li>Stop when a node is pure, hits max depth, or has too few samples to split further.</li>
+      </ol>
+
+      <pre class="code"><span class="k">from</span> sklearn.tree <span class="k">import</span> DecisionTreeClassifier
+model = DecisionTreeClassifier(criterion=<span class="s">"entropy"</span>, max_depth=<span class="s">5</span>)
+model.fit(X_train, y_train)</pre>
+
+      <div class="adv-grid">
+        <div class="adv-col good"><h4>Advantages</h4><ul><li>Easy to interpret and visualize</li><li>No feature scaling needed</li><li>Handles both numeric and categorical data</li></ul></div>
+        <div class="adv-col bad"><h4>Disadvantages</h4><ul><li>Prone to overfitting if left unpruned (grows too deep)</li><li>Unstable — small data changes can produce a very different tree</li></ul></div>
+      </div>
+    </section>
+
+    <section class="topic" id="svm">
+      <h2 class="topic-title"><span class="tnum">3.6</span> Support Vector Machine (SVM)</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        SVM finds the <strong>hyperplane</strong> (a line in 2D, a plane in 3D, a higher-dimensional
+        surface beyond that) that separates classes with the <strong>widest possible margin</strong> —
+        the largest gap to the nearest points of each class.
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 420 220" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="80" cy="60" r="6" fill="#1F7A6C"/><circle cx="120" cy="40" r="6" fill="#1F7A6C"/><circle cx="60" cy="110" r="6" fill="#1F7A6C"/><circle cx="140" cy="90" r="6" fill="#1F7A6C"/>
+          <circle cx="300" cy="150" r="6" fill="#AC4638"/><circle cx="340" cy="180" r="6" fill="#AC4638"/><circle cx="270" cy="190" r="6" fill="#AC4638"/><circle cx="320" cy="130" r="6" fill="#AC4638"/>
+          <line x1="30" y1="200" x2="390" y2="20" stroke="#1B1D22" stroke-width="2"/>
+          <line x1="55" y1="200" x2="415" y2="20" stroke="#8992A6" stroke-dasharray="4,3"/>
+          <line x1="5" y1="200" x2="365" y2="20" stroke="#8992A6" stroke-dasharray="4,3"/>
+          <text x="200" y="40" font-family="IBM Plex Mono" font-size="10" fill="#54565f">margin</text>
+        </svg>
+        <figcaption>The solid line is the decision boundary (hyperplane); the dashed lines mark the margin.
+        The points touching the dashed lines are the "support vectors" that define it.</figcaption>
+      </figure>
+
+      <h3>Support Vectors</h3>
+      <p>Only the data points closest to the boundary — the <strong>support vectors</strong> — actually
+      determine where the hyperplane sits. Every other point could be removed without changing the boundary at all.</p>
+
+      <h3>The Kernel Trick</h3>
+      <p>When classes aren't linearly separable in the original space, SVM can implicitly map data into a
+      higher dimension where a straight hyperplane <em>does</em> separate them — without ever explicitly
+      computing that transformation (the "kernel trick"). Common kernels: linear, polynomial, and RBF (Radial Basis Function).</p>
+
+      <pre class="code"><span class="k">from</span> sklearn.svm <span class="k">import</span> SVC
+model = SVC(kernel=<span class="s">"rbf"</span>, C=<span class="s">1.0</span>)
+model.fit(X_train, y_train)  <span class="c"># C controls margin-hardness vs. misclassification tolerance</span></pre>
+
+      <div class="adv-grid">
+        <div class="adv-col good"><h4>Advantages</h4><ul><li>Effective in high-dimensional spaces</li><li>Memory-efficient (only stores support vectors)</li><li>Kernel trick handles non-linear boundaries</li></ul></div>
+        <div class="adv-col bad"><h4>Disadvantages</h4><ul><li>Slow to train on large datasets</li><li>Requires careful feature scaling</li><li>Choosing the right kernel/C/gamma takes tuning</li></ul></div>
+      </div>
+    </section>
+
+    <div class="module-nav">
+      <a href="module-02-regression.html"><span class="lbl">Back</span>Module 02</a>
+      <a href="module-04-tuning-ensemble.html" style="text-align:right;"><span class="lbl">Next</span>Module 04 — Tuning &amp; Ensembles →</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<a href="https://buymemomo.com/vabin" class="momo-widget">
+  <img src="https://buymemomo.com/logo.png" alt="Buy me a momo" title="Buy me a momo">
+  <span class="momo-text">Buy me a momo</span>
+</a>
+</body>
+</html>

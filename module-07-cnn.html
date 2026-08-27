@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 07 — Deep Learning II: Convolutional Neural Networks</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+<nav class="rail">
+  <div class="rail-brand">AI / ML Roadmap</div>
+  <div class="rail-sub">7 modules · sequential path</div>
+  <div class="rail-module"><a href="index.html" data-n="—">Overview / Home</a></div>
+  <div class="rail-module"><a href="module-01-foundations.html" data-n="01">Foundations &amp; Feature Engineering</a></div>
+  <div class="rail-module"><a href="module-02-regression.html" data-n="02">Regression &amp; Optimization</a></div>
+  <div class="rail-module"><a href="module-03-classification.html" data-n="03">Classification Algorithms</a></div>
+  <div class="rail-module"><a href="module-04-tuning-ensemble.html" data-n="04">Tuning &amp; Ensemble Learning</a></div>
+  <div class="rail-module"><a href="module-05-unsupervised-nlp.html" data-n="05">Unsupervised Learning &amp; NLP</a></div>
+  <div class="rail-module"><a href="module-06-deep-learning-1.html" data-n="06">Deep Learning I — ANN</a></div>
+  <div class="rail-module"><a href="module-07-cnn.html" class="active" data-n="07">Deep Learning II — CNN</a></div>
+  <div class="rail-note">On this page: why CNNs · convolution layer · filters/feature maps · padding &amp; strides · pooling (max/min/avg) · stacking layers · fully connected head.</div>
+</nav>
+<div class="main">
+  <div class="topbar"><span>MODULE 07 / 07</span><a href="index.html">← All modules</a></div>
+  <div class="content">
+    <div class="eyebrow">Module 07 · Deep Learning</div>
+    <h1 class="page-title">Deep Learning II — Convolutional Neural Networks (CNN)</h1>
+    <p class="page-dek">Dense (fully connected) layers treat every pixel as an independent feature and
+    ignore spatial structure. CNNs fix that — they're built specifically to understand images.</p>
+
+    <section class="topic" id="why-cnn">
+      <h2 class="topic-title"><span class="tnum">7.1</span> Why not just use a regular ANN on images?</h2>
+      <div class="adv-grid">
+        <div class="adv-col bad">
+          <h4>Problems with a plain ANN on images</h4>
+          <ul>
+            <li>A 224×224 color image has 150,528 pixels — flattening it into one dense layer creates an enormous number of weights, extremely prone to overfitting</li>
+            <li>Flattening destroys spatial relationships (a nose is only meaningful near eyes/mouth)</li>
+            <li>No translation invariance — a shifted object looks like a totally different input</li>
+          </ul>
+        </div>
+        <div class="adv-col good">
+          <h4>What CNNs do instead</h4>
+          <ul>
+            <li>Small filters slide across the whole image, sharing the same weights everywhere (parameter sharing → far fewer weights)</li>
+            <li>Preserves 2D spatial structure between layers</li>
+            <li>Learns local patterns (edges → shapes → objects) that generalize regardless of position in the image</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="topic" id="conv-layer">
+      <h2 class="topic-title"><span class="tnum">7.2</span> The Convolution Layer</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        A convolution layer slides a small matrix of learnable weights (a <strong>filter</strong> /
+        <strong>kernel</strong>, e.g. 3×3) across the input image. At each position, it computes the
+        element-wise product between the filter and the patch of image underneath it, sums the results into
+        a single number, and places that number into an output grid called a <strong>feature map</strong>.
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 560 210" xmlns="http://www.w3.org/2000/svg">
+          <g font-family="IBM Plex Mono" font-size="9">
+          <!-- input grid 5x5 -->
+          <g transform="translate(10,10)">
+          <rect width="150" height="150" fill="none" stroke="#1B1D22"/>
+          <line x1="30" y1="0" x2="30" y2="150" stroke="#ddd"/><line x1="60" y1="0" x2="60" y2="150" stroke="#ddd"/><line x1="90" y1="0" x2="90" y2="150" stroke="#ddd"/><line x1="120" y1="0" x2="120" y2="150" stroke="#ddd"/>
+          <line x1="0" y1="30" x2="150" y2="30" stroke="#ddd"/><line x1="0" y1="60" x2="150" y2="60" stroke="#ddd"/><line x1="0" y1="90" x2="150" y2="90" stroke="#ddd"/><line x1="0" y1="120" x2="150" y2="120" stroke="#ddd"/>
+          <rect x="0" y="0" width="90" height="90" fill="none" stroke="#1F7A6C" stroke-width="2.5"/>
+          <text x="75" y="170" text-anchor="middle" fill="#54565f">Input (5×5)</text>
+          </g>
+          <!-- filter -->
+          <g transform="translate(220,45)">
+          <rect width="90" height="90" fill="#E4F1EE" stroke="#1F7A6C" stroke-width="2"/>
+          <line x1="30" y1="0" x2="30" y2="90" stroke="#1F7A6C"/><line x1="60" y1="0" x2="60" y2="90" stroke="#1F7A6C"/>
+          <line x1="0" y1="30" x2="90" y2="30" stroke="#1F7A6C"/><line x1="0" y1="60" x2="90" y2="60" stroke="#1F7A6C"/>
+          <text x="45" y="110" text-anchor="middle" fill="#54565f">Filter (3×3)</text>
+          </g>
+          <text x="370" y="95" text-anchor="middle" font-size="16" fill="#54565f">→</text>
+          <!-- output grid 3x3 -->
+          <g transform="translate(410,55)">
+          <rect width="90" height="90" fill="none" stroke="#B2661E" stroke-width="2"/>
+          <line x1="30" y1="0" x2="30" y2="90" stroke="#f0ddc4"/><line x1="60" y1="0" x2="60" y2="90" stroke="#f0ddc4"/>
+          <line x1="0" y1="30" x2="90" y2="30" stroke="#f0ddc4"/><line x1="0" y1="60" x2="90" y2="60" stroke="#f0ddc4"/>
+          <rect x="0" y="0" width="30" height="30" fill="#B2661E" opacity="0.4"/>
+          <text x="45" y="110" text-anchor="middle" fill="#54565f">Feature Map (3×3)</text>
+          </g>
+          </g>
+        </svg>
+        <figcaption>A 3×3 filter slides across the 5×5 input; each position produces one value in the 3×3
+        output feature map. A CNN learns many filters per layer, each detecting a different pattern (edges,
+        curves, textures).</figcaption>
+      </figure>
+
+      <div class="math">
+        Output size = ((N − F + 2P) / S) + 1
+        <div class="step">N = input size, F = filter size, P = padding, S = stride — this formula (below)
+        tells you the feature map's width/height for any combination of these.</div>
+      </div>
+
+      <pre class="code"><span class="k">import</span> tensorflow <span class="k">as</span> tf
+tf.keras.layers.Conv2D(filters=<span class="s">32</span>, kernel_size=(<span class="s">3</span>,<span class="s">3</span>), activation=<span class="s">"relu"</span>, padding=<span class="s">"same"</span>)</pre>
+    </section>
+
+    <section class="topic" id="padding-strides">
+      <h2 class="topic-title"><span class="tnum">7.3</span> Padding &amp; Strides</h2>
+
+      <h3>Padding</h3>
+      <p>Without padding, the output shrinks after every convolution, and pixels at the border are used in
+      far fewer computations than center pixels (information loss at the edges). Padding adds a border of
+      zeros around the input before convolving.</p>
+      <ul>
+        <li><strong>Valid padding</strong> — no padding added; output shrinks each layer.</li>
+        <li><strong>Same padding</strong> — enough zero-padding is added so the output has the <em>same</em> width/height as the input.</li>
+      </ul>
+
+      <h3>Stride</h3>
+      <p>The number of pixels the filter moves each step. Stride 1 moves one pixel at a time (dense,
+      overlapping coverage, larger output). Stride 2 skips every other position (output shrinks roughly by
+      half, faster computation, less overlap).</p>
+
+      <div class="box box-tip">
+        <div class="box-title">Rule of thumb</div>
+        Larger stride ≈ cheaper computation and smaller output, but risks skipping fine detail. "Same"
+        padding + stride 1 is the common default in early layers when you want to preserve spatial resolution.
+      </div>
+    </section>
+
+    <section class="topic" id="pooling">
+      <h2 class="topic-title"><span class="tnum">7.4</span> Pooling Layers</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Pooling downsamples a feature map — reducing its width and height while keeping the most important
+        information — which cuts computation, reduces overfitting, and adds a small amount of translation invariance.
+      </div>
+      <ul>
+        <li><strong>Max Pooling</strong> — takes the <em>maximum</em> value in each window. Most common — keeps the strongest activation (the clearest sign a pattern was detected).</li>
+        <li><strong>Min Pooling</strong> — takes the minimum value; rarely used in practice.</li>
+        <li><strong>Average Pooling</strong> — takes the mean of the window; smooths the feature map, sometimes used in later/final layers (e.g. Global Average Pooling before the output).</li>
+      </ul>
+
+      <figure>
+        <svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg">
+          <g font-family="IBM Plex Mono" font-size="11">
+          <g transform="translate(10,10)">
+          <rect width="120" height="120" fill="none" stroke="#1B1D22"/>
+          <line x1="60" y1="0" x2="60" y2="120" stroke="#ddd"/><line x1="0" y1="60" x2="120" y2="60" stroke="#ddd"/>
+          <line x1="30" y1="0" x2="30" y2="120" stroke="#eee"/><line x1="90" y1="0" x2="90" y2="120" stroke="#eee"/>
+          <line x1="0" y1="30" x2="120" y2="30" stroke="#eee"/><line x1="0" y1="90" x2="120" y2="90" stroke="#eee"/>
+          <text x="15" y="20" text-anchor="middle" font-size="10">1</text><text x="45" y="20" text-anchor="middle" font-size="10">3</text><text x="75" y="20" text-anchor="middle" font-size="10">2</text><text x="105" y="20" text-anchor="middle" font-size="10">4</text>
+          <text x="15" y="50" text-anchor="middle" font-size="10">5</text><text x="45" y="50" text-anchor="middle" font-size="10">9</text><text x="75" y="50" text-anchor="middle" font-size="10">1</text><text x="105" y="50" text-anchor="middle" font-size="10">0</text>
+          <text x="15" y="80" text-anchor="middle" font-size="10">2</text><text x="45" y="80" text-anchor="middle" font-size="10">1</text><text x="75" y="80" text-anchor="middle" font-size="10">6</text><text x="105" y="80" text-anchor="middle" font-size="10">2</text>
+          <text x="15" y="110" text-anchor="middle" font-size="10">0</text><text x="45" y="110" text-anchor="middle" font-size="10">3</text><text x="75" y="110" text-anchor="middle" font-size="10">4</text><text x="105" y="110" text-anchor="middle" font-size="10">7</text>
+          <rect x="0" y="0" width="60" height="60" fill="none" stroke="#AC4638" stroke-width="2.5"/>
+          <text x="30" y="140" text-anchor="middle" font-size="9" fill="#54565f">Input, 2×2 window</text>
+          </g>
+          <text x="180" y="80" font-size="16" fill="#54565f">→</text>
+          <g transform="translate(220,10)">
+          <rect width="60" height="60" fill="none" stroke="#1B1D22"/>
+          <line x1="30" y1="0" x2="30" y2="60" stroke="#ddd"/><line x1="0" y1="30" x2="60" y2="30" stroke="#ddd"/>
+          <text x="15" y="20" text-anchor="middle" font-size="11" fill="#1F7A6C" font-weight="700">9</text>
+          <text x="45" y="20" text-anchor="middle" font-size="11" fill="#54565f">4</text>
+          <text x="15" y="50" text-anchor="middle" font-size="11" fill="#54565f">3</text>
+          <text x="45" y="50" text-anchor="middle" font-size="11" fill="#54565f">7</text>
+          <text x="30" y="80" text-anchor="middle" font-size="9" fill="#54565f">Max-pooled output</text>
+          </g>
+          </g>
+        </svg>
+        <figcaption>Max pooling with a 2×2 window and stride 2: each window keeps only its largest value — [1,3,5,9] → 9.</figcaption>
+      </figure>
+
+      <pre class="code">tf.keras.layers.MaxPooling2D(pool_size=(<span class="s">2</span>,<span class="s">2</span>), strides=<span class="s">2</span>)</pre>
+    </section>
+
+    <section class="topic" id="cnn-architecture">
+      <h2 class="topic-title"><span class="tnum">7.5</span> Stacking Layers: Full CNN Architecture</h2>
+      <p>A typical CNN repeats <strong>Conv → Activation (ReLU) → Pooling</strong> multiple times, each block
+      learning progressively more abstract features:</p>
+      <ul>
+        <li><strong>Early layers</strong> detect simple patterns — edges, corners, color blobs.</li>
+        <li><strong>Middle layers</strong> combine those into textures and simple shapes.</li>
+        <li><strong>Deep layers</strong> combine shapes into object parts (eyes, wheels, wings).</li>
+      </ul>
+      <p>After several conv+pool blocks, the resulting feature maps are <strong>flattened</strong> into a
+      1D vector and fed into one or more <strong>fully connected (dense) layers</strong> — the same kind of
+      layer from Module 06 — which combine all the learned features to make the final classification.</p>
+
+      <figure>
+        <svg viewBox="0 0 620 130" xmlns="http://www.w3.org/2000/svg">
+          <g font-family="IBM Plex Mono" font-size="9.5" fill="#1B1D22">
+          <rect x="0" y="30" width="70" height="60" fill="#E4F1EE" stroke="#1F7A6C"/><text x="35" y="65" text-anchor="middle">Conv+ReLU</text>
+          <rect x="80" y="40" width="50" height="40" fill="#FBF0E1" stroke="#B2661E"/><text x="105" y="65" text-anchor="middle" font-size="9">Pool</text>
+          <rect x="150" y="35" width="65" height="50" fill="#E4F1EE" stroke="#1F7A6C"/><text x="182" y="65" text-anchor="middle">Conv+ReLU</text>
+          <rect x="225" y="42" width="45" height="36" fill="#FBF0E1" stroke="#B2661E"/><text x="247" y="65" text-anchor="middle" font-size="9">Pool</text>
+          <rect x="290" y="38" width="60" height="44" fill="#E4F1EE" stroke="#1F7A6C"/><text x="320" y="65" text-anchor="middle" font-size="9">Conv+ReLU</text>
+          <rect x="360" y="44" width="40" height="32" fill="#FBF0E1" stroke="#B2661E"/><text x="380" y="65" text-anchor="middle" font-size="8.5">Pool</text>
+          <text x="420" y="65" font-size="14">→</text>
+          <rect x="440" y="30" width="30" height="60" fill="#FAECE9" stroke="#AC4638"/><text x="455" y="65" text-anchor="middle" font-size="8" transform="rotate(-90 455 65)">Flatten</text>
+          <rect x="490" y="35" width="60" height="50" fill="#FAECE9" stroke="#AC4638"/><text x="520" y="65" text-anchor="middle" font-size="9">Dense</text>
+          <rect x="565" y="45" width="50" height="30" fill="#1B1D22"/><text x="590" y="64" text-anchor="middle" font-size="8" fill="#fff">Output</text>
+          </g>
+        </svg>
+        <figcaption>The general CNN pattern: several convolution+pooling blocks for feature extraction, then flatten + dense layers as the classification head.</figcaption>
+      </figure>
+
+      <div class="code-label">Python — a complete small CNN in Keras</div>
+      <pre class="code"><span class="k">import</span> tensorflow <span class="k">as</span> tf
+
+model = tf.keras.Sequential([
+    tf.keras.layers.Conv2D(<span class="s">32</span>, (<span class="s">3</span>,<span class="s">3</span>), activation=<span class="s">"relu"</span>, padding=<span class="s">"same"</span>, input_shape=(<span class="s">64</span>,<span class="s">64</span>,<span class="s">3</span>)),
+    tf.keras.layers.MaxPooling2D((<span class="s">2</span>,<span class="s">2</span>)),
+
+    tf.keras.layers.Conv2D(<span class="s">64</span>, (<span class="s">3</span>,<span class="s">3</span>), activation=<span class="s">"relu"</span>, padding=<span class="s">"same"</span>),
+    tf.keras.layers.MaxPooling2D((<span class="s">2</span>,<span class="s">2</span>)),
+
+    tf.keras.layers.Conv2D(<span class="s">128</span>, (<span class="s">3</span>,<span class="s">3</span>), activation=<span class="s">"relu"</span>, padding=<span class="s">"same"</span>),
+    tf.keras.layers.MaxPooling2D((<span class="s">2</span>,<span class="s">2</span>)),
+
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(<span class="s">128</span>, activation=<span class="s">"relu"</span>),
+    tf.keras.layers.Dense(<span class="s">10</span>, activation=<span class="s">"softmax"</span>)   <span class="c"># 10-class classification</span>
+])
+
+model.compile(optimizer=<span class="s">"adam"</span>, loss=<span class="s">"sparse_categorical_crossentropy"</span>, metrics=[<span class="s">"accuracy"</span>])
+model.summary()</pre>
+
+      <p>Official reference: <a href="https://www.tensorflow.org/tutorials/images/cnn" target="_blank">TensorFlow's CNN tutorial</a>
+      walks through this exact pattern on the CIFAR-10 dataset with full training code.</p>
+
+      <div class="adv-grid">
+        <div class="adv-col good"><h4>Advantages of CNNs</h4><ul><li>Far fewer parameters than a dense network on the same image, thanks to weight sharing</li><li>Learns spatial hierarchies automatically — no manual feature engineering on pixels</li><li>Translation-invariant pattern detection</li></ul></div>
+        <div class="adv-col bad"><h4>Disadvantages</h4><ul><li>Still needs a lot of labeled data to train from scratch</li><li>Computationally expensive to train (benefits heavily from GPUs)</li><li>Not naturally invariant to rotation/scale without data augmentation</li></ul></div>
+      </div>
+
+      <div class="check">
+        <div class="box-title">Check your understanding</div>
+        Why do CNNs use far fewer parameters than a dense network processing the same image?
+        <em>(Answer: a convolution filter's weights are shared across every position in the image — the same
+        small filter slides everywhere — instead of a dense layer needing a unique weight for every single
+        pixel-to-neuron connection.)</em>
+      </div>
+    </section>
+
+    <section class="topic" id="wrap-up">
+      <h2 class="topic-title"><span class="tnum">7.6</span> Where to go from here</h2>
+      <p>You've now covered the full arc: data → classical ML → ensembling → unsupervised methods → NLP →
+      neural networks → CNNs. Natural next steps beyond this roadmap: Recurrent Neural Networks (RNN/LSTM)
+      and Transformers for sequential data, transfer learning with pretrained CNNs (ResNet, VGG, EfficientNet),
+      and word embeddings (Word2Vec, BERT) to go deeper into NLP.</p>
+    </section>
+
+    <div class="module-nav">
+      <a href="module-06-deep-learning-1.html"><span class="lbl">Back</span>Module 06</a>
+      <a href="index.html" style="text-align:right;"><span class="lbl">Finish</span>Back to Overview →</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<a href="https://buymemomo.com/vabin" class="momo-widget">
+  <img src="https://buymemomo.com/logo.png" alt="Buy me a momo" title="Buy me a momo">
+  <span class="momo-text">Buy me a momo</span>
+</a>
+</body>
+</html>

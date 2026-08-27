@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 06 — Deep Learning I: Neural Network Foundations</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+<nav class="rail">
+  <div class="rail-brand">AI / ML Roadmap</div>
+  <div class="rail-sub">7 modules · sequential path</div>
+  <div class="rail-module"><a href="index.html" data-n="—">Overview / Home</a></div>
+  <div class="rail-module"><a href="module-01-foundations.html" data-n="01">Foundations &amp; Feature Engineering</a></div>
+  <div class="rail-module"><a href="module-02-regression.html" data-n="02">Regression &amp; Optimization</a></div>
+  <div class="rail-module"><a href="module-03-classification.html" data-n="03">Classification Algorithms</a></div>
+  <div class="rail-module"><a href="module-04-tuning-ensemble.html" data-n="04">Tuning &amp; Ensemble Learning</a></div>
+  <div class="rail-module"><a href="module-05-unsupervised-nlp.html" data-n="05">Unsupervised Learning &amp; NLP</a></div>
+  <div class="rail-module"><a href="module-06-deep-learning-1.html" class="active" data-n="06">Deep Learning I — ANN</a></div>
+  <div class="rail-module"><a href="module-07-cnn.html" data-n="07">Deep Learning II — CNN</a></div>
+  <div class="rail-note">On this page: perceptron · ANN architecture · forward/backward propagation math · vanishing gradient · every activation function · every loss function · every optimizer.</div>
+</nav>
+<div class="main">
+  <div class="topbar"><span>MODULE 06 / 07</span><a href="index.html">← All modules</a></div>
+  <div class="content">
+    <div class="eyebrow">Module 06 · Deep Learning</div>
+    <h1 class="page-title">Deep Learning I — Neural Network Foundations</h1>
+    <p class="page-dek">Every neural network — from a 3-neuron toy example to GPT — is built from the same
+    handful of ideas covered here: a neuron, an activation, a loss, and an optimizer.</p>
+
+    <section class="topic" id="perceptron">
+      <h2 class="topic-title"><span class="tnum">6.1</span> The Perceptron</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        The perceptron is the simplest possible neural network unit: it takes inputs, multiplies each by a
+        weight, sums them with a bias, and passes the result through an activation function to produce an output.
+      </div>
+      <div class="math">
+        z = w₁x₁ + w₂x₂ + ... + wₙxₙ + b
+        <div class="step">output = activation(z)</div>
+      </div>
+      <figure>
+        <svg viewBox="0 0 380 180" xmlns="http://www.w3.org/2000/svg">
+          <g font-family="IBM Plex Mono" font-size="11" fill="#1B1D22">
+          <circle cx="40" cy="40" r="14" fill="#E4F1EE" stroke="#1F7A6C"/><text x="40" y="44" text-anchor="middle" font-size="10">x₁</text>
+          <circle cx="40" cy="90" r="14" fill="#E4F1EE" stroke="#1F7A6C"/><text x="40" y="94" text-anchor="middle" font-size="10">x₂</text>
+          <circle cx="40" cy="140" r="14" fill="#E4F1EE" stroke="#1F7A6C"/><text x="40" y="144" text-anchor="middle" font-size="10">x₃</text>
+          <circle cx="220" cy="90" r="26" fill="#FBF0E1" stroke="#B2661E" stroke-width="2"/>
+          <text x="220" y="86" text-anchor="middle" font-size="10">Σ</text>
+          <text x="220" y="100" text-anchor="middle" font-size="9">+b</text>
+          <line x1="54" y1="40" x2="196" y2="80" stroke="#8992A6"/><text x="120" y="55" font-size="9" fill="#54565f">w₁</text>
+          <line x1="54" y1="90" x2="194" y2="90" stroke="#8992A6"/><text x="120" y="85" font-size="9" fill="#54565f">w₂</text>
+          <line x1="54" y1="140" x2="196" y2="100" stroke="#8992A6"/><text x="120" y="130" font-size="9" fill="#54565f">w₃</text>
+          <line x1="246" y1="90" x2="300" y2="90" stroke="#8992A6"/>
+          <circle cx="330" cy="90" r="20" fill="#FAECE9" stroke="#AC4638" stroke-width="2"/>
+          <text x="330" y="94" text-anchor="middle" font-size="9">f(z)</text>
+          </g>
+        </svg>
+        <figcaption>Inputs are weighted, summed with a bias, then passed through an activation function f — this whole unit is one "neuron".</figcaption>
+      </figure>
+      <p>A single perceptron with a sigmoid activation is, mathematically, exactly logistic regression
+      (Module 03). Deep learning's power comes from stacking many of these units into layers.</p>
+    </section>
+
+    <section class="topic" id="ann">
+      <h2 class="topic-title"><span class="tnum">6.2</span> Artificial Neural Networks (ANN)</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        An ANN stacks neurons into layers: an <strong>input layer</strong> (raw features), one or more
+        <strong>hidden layers</strong> (each neuron connected to every neuron in the previous layer — "fully
+        connected" / "dense"), and an <strong>output layer</strong> (the prediction). Stacking layers lets
+        the network learn increasingly abstract combinations of the input features.
+      </div>
+      <figure>
+        <svg viewBox="0 0 420 200" xmlns="http://www.w3.org/2000/svg">
+          <g fill="#1F7A6C">
+          <circle cx="40" cy="50" r="10"/><circle cx="40" cy="100" r="10"/><circle cx="40" cy="150" r="10"/>
+          </g>
+          <g fill="#B2661E">
+          <circle cx="170" cy="30" r="10"/><circle cx="170" cy="75" r="10"/><circle cx="170" cy="120" r="10"/><circle cx="170" cy="165" r="10"/>
+          </g>
+          <g fill="#B2661E" opacity="0.8">
+          <circle cx="280" cy="55" r="10"/><circle cx="280" cy="100" r="10"/><circle cx="280" cy="145" r="10"/>
+          </g>
+          <g fill="#AC4638">
+          <circle cx="390" cy="100" r="10"/>
+          </g>
+          <g stroke="#D8D3C4" stroke-width="1">
+          <!-- input to hidden1 -->
+          <line x1="50" y1="50" x2="160" y2="30"/><line x1="50" y1="50" x2="160" y2="75"/><line x1="50" y1="50" x2="160" y2="120"/><line x1="50" y1="50" x2="160" y2="165"/>
+          <line x1="50" y1="100" x2="160" y2="30"/><line x1="50" y1="100" x2="160" y2="75"/><line x1="50" y1="100" x2="160" y2="120"/><line x1="50" y1="100" x2="160" y2="165"/>
+          <line x1="50" y1="150" x2="160" y2="30"/><line x1="50" y1="150" x2="160" y2="75"/><line x1="50" y1="150" x2="160" y2="120"/><line x1="50" y1="150" x2="160" y2="165"/>
+          <!-- hidden1 to hidden2 -->
+          <line x1="180" y1="30" x2="270" y2="55"/><line x1="180" y1="30" x2="270" y2="100"/><line x1="180" y1="30" x2="270" y2="145"/>
+          <line x1="180" y1="75" x2="270" y2="55"/><line x1="180" y1="75" x2="270" y2="100"/><line x1="180" y1="75" x2="270" y2="145"/>
+          <line x1="180" y1="120" x2="270" y2="55"/><line x1="180" y1="120" x2="270" y2="100"/><line x1="180" y1="120" x2="270" y2="145"/>
+          <line x1="180" y1="165" x2="270" y2="55"/><line x1="180" y1="165" x2="270" y2="100"/><line x1="180" y1="165" x2="270" y2="145"/>
+          <!-- hidden2 to output -->
+          <line x1="290" y1="55" x2="380" y2="100"/><line x1="290" y1="100" x2="380" y2="100"/><line x1="290" y1="145" x2="380" y2="100"/>
+          </g>
+          <g font-family="IBM Plex Mono" font-size="10" fill="#54565f">
+          <text x="40" y="190" text-anchor="middle">Input</text>
+          <text x="225" y="190" text-anchor="middle">Hidden layers</text>
+          <text x="390" y="190" text-anchor="middle">Output</text>
+          </g>
+        </svg>
+        <figcaption>A fully connected feed-forward network — every neuron in one layer connects to every neuron in the next.</figcaption>
+      </figure>
+    </section>
+
+    <section class="topic" id="forward-backward">
+      <h2 class="topic-title"><span class="tnum">6.3</span> Forward &amp; Backward Propagation</h2>
+
+      <h3>Forward Propagation</h3>
+      <p>Data flows left to right through the network: each layer computes <code>z = Wx + b</code>, applies
+      an activation function, and passes the result to the next layer, until the output layer produces a
+      final prediction. This prediction is compared to the true label using a <strong>loss function</strong>.</p>
+
+      <h3>Backward Propagation (Backprop)</h3>
+      <p>To improve, the network needs to know how much each weight contributed to the error. Backprop
+      applies the <strong>chain rule</strong> from calculus, working backward from the output layer to the
+      input layer, computing the gradient of the loss with respect to every weight in the network.</p>
+      <div class="math">
+        ∂L/∂wᵢⱼ = ∂L/∂output × ∂output/∂z × ∂z/∂wᵢⱼ
+        <div class="step">Each layer's gradient depends on the gradient computed in the layer after it —
+        this is exactly the chain rule, applied layer by layer, moving backward.</div>
+      </div>
+      <p>Once every gradient is known, each weight is updated using gradient descent (Module 02):</p>
+      <div class="math">w := w − α · ∂L/∂w</div>
+
+      <div class="box box-def">
+        <div class="box-title">Epoch</div>
+        One epoch = one complete pass of the entire training dataset through the network (forward + backward
+        + weight update for every batch). Training usually runs for many epochs until the loss stops improving.
+      </div>
+    </section>
+
+    <section class="topic" id="vanishing-gradient">
+      <h2 class="topic-title"><span class="tnum">6.4</span> The Vanishing Gradient Problem</h2>
+      <div class="box box-warn">
+        <div class="box-title">The problem</div>
+        In deep networks, gradients are computed by multiplying many small numbers together (chain rule
+        across many layers). If each layer's gradient is a fraction less than 1 (as with sigmoid/tanh, whose
+        derivatives max out at 0.25 and 1.0 respectively but are usually much smaller), the product shrinks
+        exponentially the further back you propagate — early layers end up receiving a gradient so close to
+        zero that they barely learn at all.
+      </div>
+      <p><strong>Why it matters:</strong> this was the main reason very deep networks were hard to train for
+      years. It's a key motivation behind ReLU-family activations (they don't saturate for positive inputs)
+      and architectural fixes like residual/skip connections.</p>
+    </section>
+
+    <section class="topic" id="activation-functions">
+      <h2 class="topic-title"><span class="tnum">6.5</span> Activation Functions</h2>
+      <p>An activation function introduces <strong>non-linearity</strong>. Without one, stacking any number
+      of layers collapses mathematically into a single linear function — no amount of depth would let the
+      network learn curved decision boundaries or complex patterns.</p>
+
+      <h3>Linear Activation</h3>
+      <div class="math">f(z) = z</div>
+      <p>Used only in output layers for regression (predicting an unbounded real number). Never used in
+      hidden layers — stacking linear layers is mathematically equivalent to one linear layer, defeating the point of depth.</p>
+
+      <h3>Sigmoid</h3>
+      <div class="math">f(z) = 1 / (1 + e^(−z))    → range (0, 1)</div>
+      <p>Good for output layer of binary classification (interpretable as probability). Rarely used in
+      hidden layers of deep networks — it saturates (flattens) for large |z|, causing vanishing gradients.</p>
+
+      <h3>Tanh (Hyperbolic Tangent)</h3>
+      <div class="math">f(z) = (eᶻ − e⁻ᶻ) / (eᶻ + e⁻ᶻ)    → range (−1, 1)</div>
+      <p>Zero-centered (unlike sigmoid), which usually helps optimization converge faster than sigmoid — but
+      it still saturates at extreme values, so it also suffers from vanishing gradients in deep networks.</p>
+
+      <h3>ReLU (Rectified Linear Unit)</h3>
+      <div class="math">f(z) = max(0, z)</div>
+      <p>The default choice for hidden layers in most modern networks. Computationally cheap, doesn't
+      saturate for positive inputs (so gradients flow well), and empirically trains faster than
+      sigmoid/tanh.</p>
+
+      <div class="box box-warn">
+        <div class="box-title">The Dying ReLU Problem</div>
+        If a neuron's weighted input z is consistently negative, ReLU outputs exactly 0 and its gradient is
+        also exactly 0 — that neuron stops updating entirely and "dies," never activating again for any input.
+        A large learning rate or bad initialization can cause many neurons to die this way.
+      </div>
+
+      <h3>Leaky ReLU</h3>
+      <div class="math">f(z) = z if z &gt; 0,  else  α·z  (α is a small constant, e.g. 0.01)</div>
+      <p>Fixes dying ReLU by allowing a small, non-zero gradient when z is negative, so the neuron can still recover.</p>
+
+      <h3>PReLU (Parametric ReLU)</h3>
+      <p>Same shape as Leaky ReLU, but α is <strong>learned</strong> during training instead of being a fixed
+      hyperparameter — lets the network decide the optimal amount of "leak" per neuron.</p>
+
+      <h3>Swish</h3>
+      <div class="math">f(z) = z · sigmoid(z)</div>
+      <p>A smooth, non-monotonic activation (discovered via automated search at Google) that often
+      outperforms ReLU on deeper networks, at a small extra computational cost.</p>
+
+      <figure>
+        <svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
+          <line x1="20" y1="100" x2="480" y2="100" stroke="#ccc"/>
+          <line x1="250" y1="10" x2="250" y2="190" stroke="#ccc"/>
+          <path d="M 20 40 C 100 40, 180 10, 250 100 S 400 190, 480 190" fill="none" stroke="#1F7A6C" stroke-width="2"/>
+          <text x="440" y="70" font-family="IBM Plex Mono" font-size="9" fill="#1F7A6C">sigmoid</text>
+          <path d="M250 190 L 250 100 L 480 20" fill="none" stroke="#B2661E" stroke-width="2"/>
+          <text x="380" y="45" font-family="IBM Plex Mono" font-size="9" fill="#B2661E">ReLU</text>
+          <path d="M20 185 L 250 100 L 480 20" fill="none" stroke="#AC4638" stroke-width="1.5" stroke-dasharray="4,2"/>
+          <text x="60" y="175" font-family="IBM Plex Mono" font-size="9" fill="#AC4638">Leaky ReLU</text>
+        </svg>
+        <figcaption>Sigmoid saturates on both ends. ReLU is 0 for all negative input (flat = zero gradient = "dying"). Leaky ReLU keeps a small slope on the negative side.</figcaption>
+      </figure>
+
+      <h3>Which activation, and why?</h3>
+      <table>
+        <tr><th>Function</th><th>Typical use</th><th>Why</th></tr>
+        <tr><td>ReLU</td><td>Default for hidden layers</td><td>Fast, avoids saturation for z&gt;0</td></tr>
+        <tr><td>Leaky ReLU / PReLU</td><td>Hidden layers, if dying ReLU is observed</td><td>Keeps gradient alive for z&lt;0</td></tr>
+        <tr><td>Sigmoid</td><td>Output layer, binary classification</td><td>Outputs a clean 0–1 probability</td></tr>
+        <tr><td>Softmax</td><td>Output layer, multi-class classification</td><td>Outputs a probability distribution over classes that sums to 1</td></tr>
+        <tr><td>Linear</td><td>Output layer, regression</td><td>Unbounded real-valued output</td></tr>
+        <tr><td>Tanh</td><td>Hidden layers in RNNs historically</td><td>Zero-centered outputs</td></tr>
+        <tr><td>Swish</td><td>Deep networks where squeezing out extra accuracy matters</td><td>Smooth, non-monotonic, empirically strong</td></tr>
+      </table>
+
+      <pre class="code"><span class="k">import</span> tensorflow <span class="k">as</span> tf
+model = tf.keras.Sequential([
+    tf.keras.layers.Dense(<span class="s">64</span>, activation=<span class="s">"relu"</span>),
+    tf.keras.layers.Dense(<span class="s">32</span>, activation=<span class="s">"relu"</span>),
+    tf.keras.layers.Dense(<span class="s">1</span>, activation=<span class="s">"sigmoid"</span>)  <span class="c"># binary classification output</span>
+])</pre>
+    </section>
+
+    <section class="topic" id="loss-functions">
+      <h2 class="topic-title"><span class="tnum">6.6</span> Loss Functions</h2>
+
+      <h3>Regression losses</h3>
+      <table>
+        <tr><th>Loss</th><th>Formula (per sample)</th><th>Notes</th></tr>
+        <tr><td>MAE (Mean Absolute Error)</td><td>|y − ŷ|</td><td>Robust to outliers, gradient has constant magnitude</td></tr>
+        <tr><td>MSE (Mean Squared Error)</td><td>(y − ŷ)²</td><td>Penalizes large errors heavily; smooth gradient, most common default</td></tr>
+        <tr><td>MSLE (Mean Squared Log Error)</td><td>(log(1+y) − log(1+ŷ))²</td><td>Useful when the target spans orders of magnitude and relative error matters more than absolute error</td></tr>
+      </table>
+
+      <h3>Classification losses</h3>
+      <table>
+        <tr><th>Loss</th><th>Use case</th><th>Notes</th></tr>
+        <tr><td>Binary Cross-Entropy</td><td>Binary classification</td><td>Same as "log loss" from Module 03</td></tr>
+        <tr><td>Categorical Cross-Entropy</td><td>Multi-class, one-hot labels</td><td>Pairs with softmax output activation</td></tr>
+        <tr><td>Sparse Categorical Cross-Entropy</td><td>Multi-class, integer labels</td><td>Same math as above, saves you from one-hot encoding labels manually</td></tr>
+      </table>
+      <div class="math">
+        Categorical Cross-Entropy = − Σᵢ yᵢ · log(ŷᵢ)
+        <div class="step">Summed over all classes i; yᵢ is 1 for the true class and 0 elsewhere (one-hot), so
+        only the predicted probability assigned to the true class actually affects the loss.</div>
+      </div>
+      <pre class="code">model.compile(optimizer=<span class="s">"adam"</span>, loss=<span class="s">"binary_crossentropy"</span>, metrics=[<span class="s">"accuracy"</span>])</pre>
+    </section>
+
+    <section class="topic" id="optimizers">
+      <h2 class="topic-title"><span class="tnum">6.7</span> Optimizers</h2>
+      <p>An optimizer is the specific rule used to update weights using the gradients from backprop. They
+      differ mainly in <strong>how much data</strong> they use per update and <strong>how they adapt</strong> the step size.</p>
+
+      <h3>Batch Gradient Descent</h3>
+      <p>Uses the <strong>entire</strong> training set to compute one gradient, then makes one update per
+      epoch. Very stable direction, but slow and memory-heavy on large datasets.</p>
+
+      <h3>Stochastic Gradient Descent (SGD)</h3>
+      <p>Updates weights after <strong>every single training example</strong>. Very fast per update and can
+      escape shallow local minima due to its noisy path, but the noisy path also makes convergence unstable/jittery.</p>
+
+      <h3>Mini-Batch Gradient Descent</h3>
+      <p>The practical middle ground used almost everywhere: compute the gradient over a small
+      <strong>batch</strong> (e.g. 32, 64, 128 samples) at a time. Balances the stability of batch GD with
+      the speed and regularizing noise of SGD.</p>
+
+      <figure>
+        <svg viewBox="0 0 480 180" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 40 160 Q 240 20 440 30" fill="none" stroke="#1F7A6C" stroke-width="2" stroke-dasharray="0"/>
+          <text x="240" y="15" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#1F7A6C">Batch GD — smooth path</text>
+          <path d="M 40 160 Q 80 100 130 130 T 220 90 T 300 100 T 380 50 T 440 40" fill="none" stroke="#AC4638" stroke-width="1.5"/>
+          <text x="120" y="175" font-family="IBM Plex Mono" font-size="9" fill="#AC4638">SGD — noisy, zigzag path</text>
+        </svg>
+        <figcaption>Both eventually reach the minimum region, but their paths through the loss surface look very different.</figcaption>
+      </figure>
+
+      <h3>Momentum</h3>
+      <p>Adds a fraction of the previous update to the current one — like a ball rolling downhill that
+      builds up speed — smooths out oscillations and speeds up convergence in consistent directions.</p>
+
+      <h3>AdaGrad</h3>
+      <p>Adapts the learning rate <strong>per parameter</strong>, shrinking it for parameters that have
+      received large gradients already (frequently-updated features) and keeping it larger for rarely-updated ones.
+      Downside: the learning rate only ever shrinks and can become too small to keep learning.</p>
+
+      <h3>Adam (Adaptive Moment Estimation)</h3>
+      <p>Combines the ideas of Momentum (tracking a moving average of past gradients) and AdaGrad/RMSProp
+      (adapting the learning rate per parameter, but with a decaying average so it doesn't shrink forever).
+      It's the default, most widely used optimizer today for good reason — fast convergence with minimal manual tuning.</p>
+
+      <pre class="code">model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=<span class="s">0.001</span>),
+              loss=<span class="s">"categorical_crossentropy"</span>)</pre>
+
+      <table>
+        <tr><th>Optimizer</th><th>Adapts LR per parameter?</th><th>Uses momentum?</th><th>Typical use</th></tr>
+        <tr><td>Batch GD</td><td>No</td><td>No</td><td>Small datasets, theory/teaching</td></tr>
+        <tr><td>SGD (+ momentum)</td><td>No</td><td>Optional</td><td>Still used, especially with momentum, in CV</td></tr>
+        <tr><td>AdaGrad</td><td>Yes</td><td>No</td><td>Sparse features (e.g. NLP with rare words)</td></tr>
+        <tr><td>Adam</td><td>Yes</td><td>Yes</td><td>Default choice for most deep learning tasks</td></tr>
+      </table>
+
+      <div class="check">
+        <div class="box-title">Check your understanding</div>
+        Why does ReLU generally train deep networks faster than sigmoid? <em>(Answer: ReLU's gradient is
+        exactly 1 for any positive input — it never saturates on that side — so gradients don't shrink
+        toward zero as they propagate backward through many layers, unlike sigmoid, which saturates and
+        causes the vanishing gradient problem.)</em>
+      </div>
+    </section>
+
+    <div class="module-nav">
+      <a href="module-05-unsupervised-nlp.html"><span class="lbl">Back</span>Module 05</a>
+      <a href="module-07-cnn.html" style="text-align:right;"><span class="lbl">Next</span>Module 07 — CNNs →</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<a href="https://buymemomo.com/vabin" class="momo-widget">
+  <img src="https://buymemomo.com/logo.png" alt="Buy me a momo" title="Buy me a momo">
+  <span class="momo-text">Buy me a momo</span>
+</a>
+</body>
+</html>

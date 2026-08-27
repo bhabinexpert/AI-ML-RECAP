@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 01 — ML Foundations &amp; Feature Engineering</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+
+<nav class="rail">
+  <div class="rail-brand">AI / ML Roadmap</div>
+  <div class="rail-sub">7 modules · sequential path</div>
+
+  <div class="rail-module"><a href="index.html" data-n="—">Overview / Home</a></div>
+  <div class="rail-module"><a href="module-01-foundations.html" class="active" data-n="01">Foundations &amp; Feature Engineering</a></div>
+  <div class="rail-module"><a href="module-02-regression.html" data-n="02">Regression &amp; Optimization</a></div>
+  <div class="rail-module"><a href="module-03-classification.html" data-n="03">Classification Algorithms</a></div>
+  <div class="rail-module"><a href="module-04-tuning-ensemble.html" data-n="04">Tuning &amp; Ensemble Learning</a></div>
+  <div class="rail-module"><a href="module-05-unsupervised-nlp.html" data-n="05">Unsupervised Learning &amp; NLP</a></div>
+  <div class="rail-module"><a href="module-06-deep-learning-1.html" data-n="06">Deep Learning I — ANN</a></div>
+  <div class="rail-module"><a href="module-07-cnn.html" data-n="07">Deep Learning II — CNN</a></div>
+
+  <div class="rail-note">
+    On this page: ML definition · types of ML · EDA · the modeling pipeline · data cleaning ·
+    preprocessing · encoding · scaling · feature engineering &amp; selection.
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <span>MODULE 01 / 07</span>
+    <a href="index.html">← All modules</a>
+  </div>
+
+  <div class="content">
+    <div class="eyebrow">Module 01</div>
+    <h1 class="page-title">ML Foundations &amp; Feature Engineering</h1>
+    <p class="page-dek">Before any algorithm, a model is only as good as the data and the process feeding it.
+    This module builds the vocabulary and the pipeline every later module assumes you already know.</p>
+
+    <!-- ================= 1. WHAT IS ML ================= -->
+    <section class="topic" id="what-is-ml">
+      <h2 class="topic-title"><span class="tnum">1.1</span> What is Machine Learning?</h2>
+
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Machine Learning (ML) is a way of writing software where, instead of you hand-coding every rule,
+        you feed the computer <strong>examples</strong> (data) and it works out the rules (a mathematical
+        function) itself, so it can make predictions on examples it has never seen before.
+      </div>
+
+      <p>Compare the two approaches directly:</p>
+      <table>
+        <tr><th>Traditional Programming</th><th>Machine Learning</th></tr>
+        <tr><td>You write: Rules + Data → Program → Output</td><td>You provide: Data + Output → Program learns → Rules</td></tr>
+        <tr><td>Example: "if income &gt; 50k AND age &gt; 30 → approve loan"</td><td>Example: show the model 100,000 past loan decisions, it discovers the pattern itself</td></tr>
+        <tr><td>Breaks when the real world has too many exceptions to hand-code</td><td>Generalizes to new, unseen patterns because it learned from examples, not fixed rules</td></tr>
+      </table>
+
+      <p>ML sits inside a larger family of technologies. It's worth knowing the boundaries:</p>
+      <ul>
+        <li><strong>Artificial Intelligence (AI)</strong> — the broad goal: making machines act intelligently (can be rule-based, no learning required).</li>
+        <li><strong>Machine Learning (ML)</strong> — a subset of AI: machines that improve at a task by learning from data.</li>
+        <li><strong>Deep Learning (DL)</strong> — a subset of ML: learning using multi-layer neural networks, especially strong on unstructured data (images, text, audio).</li>
+      </ul>
+
+      <figure>
+        <svg viewBox="0 0 600 260" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="300" cy="140" r="118" fill="#E4F1EE" stroke="#1F7A6C" stroke-width="1.5"/>
+          <circle cx="300" cy="150" r="82" fill="#FBF0E1" stroke="#B2661E" stroke-width="1.5"/>
+          <circle cx="300" cy="165" r="46" fill="#FAECE9" stroke="#AC4638" stroke-width="1.5"/>
+          <text x="300" y="42" text-anchor="middle" font-family="IBM Plex Mono" font-size="14" fill="#1F7A6C" font-weight="600">ARTIFICIAL INTELLIGENCE</text>
+          <text x="300" y="90" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" fill="#B2661E" font-weight="600">MACHINE LEARNING</text>
+          <text x="300" y="168" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#AC4638" font-weight="600">DEEP</text>
+          <text x="300" y="184" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#AC4638" font-weight="600">LEARNING</text>
+        </svg>
+        <figcaption>AI ⊃ ML ⊃ DL — each ring is a strict subset of the one outside it.</figcaption>
+      </figure>
+
+      <div class="adv-grid">
+        <div class="adv-col good">
+          <h4>Why use ML</h4>
+          <ul>
+            <li>Handles problems too complex to hand-write rules for (e.g. spam detection, image recognition)</li>
+            <li>Improves automatically as more data arrives</li>
+            <li>Finds patterns humans might miss in high-dimensional data</li>
+          </ul>
+        </div>
+        <div class="adv-col bad">
+          <h4>Limitations</h4>
+          <ul>
+            <li>Needs enough quality data — "garbage in, garbage out"</li>
+            <li>Models can be a black box, hard to explain (especially deep learning)</li>
+            <li>Can quietly learn and amplify biases present in the training data</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 1.2 TYPES OF ML ================= -->
+    <section class="topic" id="types-of-ml">
+      <h2 class="topic-title"><span class="tnum">1.2</span> Types of Machine Learning</h2>
+
+      <figure>
+        <svg viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="20" width="220" height="170" rx="4" fill="#E4F1EE" stroke="#1F7A6C"/>
+          <text x="120" y="46" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="700" fill="#1F7A6C">SUPERVISED</text>
+          <text x="120" y="66" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#1B1D22">Labeled data (X → y)</text>
+          <text x="120" y="86" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#1B1D22">Regression, Classification</text>
+          <text x="120" y="110" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#54565f">e.g. predict house price,</text>
+          <text x="120" y="126" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#54565f">spam / not-spam</text>
+
+          <rect x="250" y="20" width="220" height="170" rx="4" fill="#FBF0E1" stroke="#B2661E"/>
+          <text x="360" y="46" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="700" fill="#B2661E">UNSUPERVISED</text>
+          <text x="360" y="66" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#1B1D22">Unlabeled data (X only)</text>
+          <text x="360" y="86" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#1B1D22">Clustering, Dim. Reduction</text>
+          <text x="360" y="110" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#54565f">e.g. customer segments,</text>
+          <text x="360" y="126" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#54565f">anomaly detection</text>
+
+          <rect x="490" y="20" width="220" height="170" rx="4" fill="#FAECE9" stroke="#AC4638"/>
+          <text x="600" y="46" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="700" fill="#AC4638">REINFORCEMENT</text>
+          <text x="600" y="66" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#1B1D22">Agent + Environment</text>
+          <text x="600" y="86" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#1B1D22">Reward-driven trial &amp; error</text>
+          <text x="600" y="110" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#54565f">e.g. game-playing agents,</text>
+          <text x="600" y="126" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#54565f">robotics, self-driving</text>
+        </svg>
+        <figcaption>The three core paradigms of ML, split by what kind of feedback the model learns from.</figcaption>
+      </figure>
+
+      <h3>Supervised Learning</h3>
+      <p>The model learns from <strong>labeled</strong> data: every training example has an input <code>X</code>
+      and a known correct output <code>y</code>. The model's job is to learn the mapping <code>f(X) → y</code>
+      well enough to predict <code>y</code> for brand-new <code>X</code>.</p>
+      <ul>
+        <li><strong>Regression</strong> — output is continuous (price, temperature, salary).</li>
+        <li><strong>Classification</strong> — output is a category (spam/not spam, disease/no disease).</li>
+      </ul>
+
+      <h3>Unsupervised Learning</h3>
+      <p>The model only sees <code>X</code> — no correct answers are given. It must find structure,
+      patterns, or groupings on its own.</p>
+      <ul>
+        <li><strong>Clustering</strong> — group similar data points together (customer segmentation).</li>
+        <li><strong>Dimensionality Reduction</strong> — compress many features into fewer while keeping the important signal (PCA).</li>
+      </ul>
+
+      <h3>Reinforcement Learning (RL)</h3>
+      <p>An <strong>agent</strong> interacts with an <strong>environment</strong>, takes <strong>actions</strong>,
+      and receives <strong>rewards</strong> or <strong>penalties</strong>. Over many trials it learns a
+      <strong>policy</strong> — a strategy that maximizes cumulative reward. There's no fixed "correct answer"
+      dataset; the model learns from consequences of its own actions, similar to how a person learns to ride
+      a bicycle by trying, falling, and adjusting.</p>
+
+      <div class="box box-tip">
+        <div class="box-title">Rule of thumb</div>
+        If you have historical answers to learn from → <strong>supervised</strong>. If you only have raw data
+        and want to discover structure → <strong>unsupervised</strong>. If your system needs to make a
+        sequence of decisions and learns from trial-and-error feedback → <strong>reinforcement learning</strong>.
+      </div>
+    </section>
+
+    <!-- ================= 1.3 EDA ================= -->
+    <section class="topic" id="eda">
+      <h2 class="topic-title"><span class="tnum">1.3</span> Exploratory Data Analysis (EDA)</h2>
+
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        EDA is the process of investigating a dataset — before modeling — to understand its structure,
+        spot patterns, find anomalies, and check assumptions, mostly using summary statistics and
+        visualizations.
+      </div>
+
+      <p><strong>Why it matters:</strong> if you skip EDA and jump straight to modeling, you risk feeding
+      the model outliers, wrong data types, leaked columns, or missing-value patterns that quietly wreck
+      your results. EDA is where you build intuition for the data before trusting any number a model gives you.</p>
+
+      <h3>Steps of EDA</h3>
+      <ol>
+        <li><strong>Understand the data</strong> — shape, column names, data types (<code>df.shape</code>, <code>df.info()</code>, <code>df.dtypes</code>).</li>
+        <li><strong>Descriptive statistics</strong> — mean, median, mode, std, min/max, quartiles (<code>df.describe()</code>).</li>
+        <li><strong>Univariate analysis</strong> — study one column at a time: histograms for numeric columns, count plots / bar charts for categorical columns.</li>
+        <li><strong>Bivariate / multivariate analysis</strong> — study relationships between two or more columns: scatter plots, correlation heatmaps, pair plots, box plots grouped by category.</li>
+        <li><strong>Missing value analysis</strong> — how many, where, and is it random or systematic (<code>df.isnull().sum()</code>).</li>
+        <li><strong>Outlier detection</strong> — box plots, IQR method, z-scores.</li>
+        <li><strong>Correlation analysis</strong> — which features move together, and which correlate with the target (helps flag multicollinearity too).</li>
+      </ol>
+
+      <div class="code-label">Python — a minimal EDA pass</div>
+      <pre class="code"><span class="k">import</span> pandas <span class="k">as</span> pd
+<span class="k">import</span> seaborn <span class="k">as</span> sns
+<span class="k">import</span> matplotlib.pyplot <span class="k">as</span> plt
+
+df = pd.read_csv(<span class="s">"data.csv"</span>)
+
+<span class="c"># 1. structure</span>
+print(df.shape, df.dtypes)
+
+<span class="c"># 2. descriptive stats</span>
+print(df.describe(include=<span class="s">"all"</span>))
+
+<span class="c"># 3. missing values</span>
+print(df.isnull().sum())
+
+<span class="c"># 4. univariate: distribution of a numeric column</span>
+sns.histplot(df[<span class="s">"age"</span>], kde=<span class="k">True</span>)
+
+<span class="c"># 5. bivariate: correlation heatmap</span>
+sns.heatmap(df.corr(numeric_only=<span class="k">True</span>), annot=<span class="k">True</span>, cmap=<span class="s">"coolwarm"</span>)
+plt.show()</pre>
+
+      <p>Reference: the official <a href="https://pandas.pydata.org/docs/user_guide/basics.html" target="_blank">pandas user guide</a>
+      and <a href="https://seaborn.pydata.org/tutorial.html" target="_blank">seaborn tutorial</a> cover every
+      plotting/summary function above in depth.</p>
+    </section>
+
+    <!-- ================= 1.4 ML MODEL PIPELINE ================= -->
+    <section class="topic" id="pipeline">
+      <h2 class="topic-title"><span class="tnum">1.4</span> The End-to-End Process of Building an ML Model</h2>
+
+      <figure>
+        <svg viewBox="0 0 760 130" xmlns="http://www.w3.org/2000/svg">
+          <g font-family="IBM Plex Mono" font-size="10.5" fill="#1B1D22">
+          <!-- boxes -->
+          <g>
+            <rect x="0" y="30" width="95" height="60" rx="4" fill="#fff" stroke="#1F7A6C"/>
+            <text x="47" y="55" text-anchor="middle">Problem</text>
+            <text x="47" y="68" text-anchor="middle">Definition</text>
+          </g>
+          <g>
+            <rect x="115" y="30" width="95" height="60" rx="4" fill="#fff" stroke="#1F7A6C"/>
+            <text x="162" y="55" text-anchor="middle">Data</text>
+            <text x="162" y="68" text-anchor="middle">Collection</text>
+          </g>
+          <g>
+            <rect x="230" y="30" width="95" height="60" rx="4" fill="#fff" stroke="#1F7A6C"/>
+            <text x="277" y="48" text-anchor="middle">EDA +</text>
+            <text x="277" y="61" text-anchor="middle">Cleaning</text>
+            <text x="277" y="74" text-anchor="middle">Preprocess</text>
+          </g>
+          <g>
+            <rect x="345" y="30" width="95" height="60" rx="4" fill="#fff" stroke="#B2661E"/>
+            <text x="392" y="55" text-anchor="middle">Feature</text>
+            <text x="392" y="68" text-anchor="middle">Engineering</text>
+          </g>
+          <g>
+            <rect x="460" y="30" width="95" height="60" rx="4" fill="#fff" stroke="#B2661E"/>
+            <text x="507" y="55" text-anchor="middle">Train / Test</text>
+            <text x="507" y="68" text-anchor="middle">Split</text>
+          </g>
+          <g>
+            <rect x="575" y="30" width="90" height="60" rx="4" fill="#fff" stroke="#AC4638"/>
+            <text x="620" y="55" text-anchor="middle">Model</text>
+            <text x="620" y="68" text-anchor="middle">Training</text>
+          </g>
+          <g>
+            <rect x="680" y="30" width="80" height="60" rx="4" fill="#fff" stroke="#AC4638"/>
+            <text x="720" y="48" text-anchor="middle">Evaluate</text>
+            <text x="720" y="61" text-anchor="middle">/ Tune /</text>
+            <text x="720" y="74" text-anchor="middle">Deploy</text>
+          </g>
+          </g>
+          <g stroke="#8992A6" stroke-width="1.4" marker-end="url(#arrow)">
+            <line x1="95" y1="60" x2="112" y2="60"/>
+            <line x1="210" y1="60" x2="227" y2="60"/>
+            <line x1="325" y1="60" x2="342" y2="60"/>
+            <line x1="440" y1="60" x2="457" y2="60"/>
+            <line x1="555" y1="60" x2="572" y2="60"/>
+            <line x1="665" y1="60" x2="677" y2="60"/>
+          </g>
+          <defs>
+            <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 z" fill="#8992A6"/>
+            </marker>
+          </defs>
+        </svg>
+        <figcaption>This is a cycle, not a straight line — evaluation results routinely send you back to feature engineering or even data collection.</figcaption>
+      </figure>
+
+      <ol>
+        <li><strong>Problem definition</strong> — what exactly are you predicting, and how will you measure success?</li>
+        <li><strong>Data collection</strong> — surveys, databases, APIs, scraping, sensors.</li>
+        <li><strong>EDA, cleaning &amp; preprocessing</strong> — covered in this module.</li>
+        <li><strong>Feature engineering &amp; selection</strong> — turning raw columns into model-ready signal.</li>
+        <li><strong>Train/test split</strong> — hold out data the model never sees during training, to test honestly.</li>
+        <li><strong>Model training</strong> — fit an algorithm's parameters to the training data.</li>
+        <li><strong>Evaluation</strong> — measure performance on the held-out test set with the right metric.</li>
+        <li><strong>Hyperparameter tuning</strong> — covered in Module 04.</li>
+        <li><strong>Deployment &amp; monitoring</strong> — ship the model, watch for performance drift over time.</li>
+      </ol>
+    </section>
+
+    <!-- ================= 1.5 DATA CLEANING ================= -->
+    <section class="topic" id="data-cleaning">
+      <h2 class="topic-title"><span class="tnum">1.5</span> Data Cleaning</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Data cleaning is fixing or removing incorrect, corrupted, duplicate, or incomplete data so the
+        dataset accurately represents what it's supposed to represent.
+      </div>
+
+      <h3>Common problems &amp; fixes</h3>
+      <table>
+        <tr><th>Problem</th><th>Typical fix</th></tr>
+        <tr><td>Missing values</td><td>Drop rows/columns, or impute with mean/median/mode, or a model-based imputer</td></tr>
+        <tr><td>Duplicate rows</td><td><code>df.drop_duplicates()</code></td></tr>
+        <tr><td>Inconsistent formatting ("NY" vs "New York")</td><td>Standardize categories with mapping/regex</td></tr>
+        <tr><td>Wrong data types (numbers stored as text)</td><td><code>pd.to_numeric()</code>, <code>astype()</code></td></tr>
+        <tr><td>Outliers from data-entry errors</td><td>Cap (winsorize), remove, or verify against source</td></tr>
+        <tr><td>Structural errors (typos in category labels)</td><td>Fuzzy matching / manual mapping</td></tr>
+      </table>
+
+      <div class="code-label">Python</div>
+      <pre class="code"><span class="c"># missing values</span>
+df[<span class="s">"age"</span>] = df[<span class="s">"age"</span>].fillna(df[<span class="s">"age"</span>].median())
+
+<span class="c"># drop exact duplicates</span>
+df = df.drop_duplicates()
+
+<span class="c"># fix inconsistent category text</span>
+df[<span class="s">"city"</span>] = df[<span class="s">"city"</span>].str.strip().str.title()
+
+<span class="c"># enforce correct dtype</span>
+df[<span class="s">"price"</span>] = pd.to_numeric(df[<span class="s">"price"</span>], errors=<span class="s">"coerce"</span>)</pre>
+
+      <div class="box box-warn">
+        <div class="box-title">Why it matters</div>
+        Every downstream step — EDA conclusions, feature engineering, and the model itself — inherits any
+        mistake left in this step. Most real-world ML failures trace back to dirty data, not a bad algorithm.
+      </div>
+    </section>
+
+    <!-- ================= 1.6 PREPROCESSING ================= -->
+    <section class="topic" id="preprocessing">
+      <h2 class="topic-title"><span class="tnum">1.6</span> Data Preprocessing</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Preprocessing is the broader step of transforming <em>cleaned</em> data into a numerical, consistent
+        format a machine learning algorithm can actually consume — since most algorithms only understand numbers.
+      </div>
+      <p>Data cleaning fixes correctness; preprocessing prepares <em>format</em>. It typically includes:</p>
+      <ul>
+        <li>Handling categorical variables → <strong>encoding</strong> (next topic).</li>
+        <li>Putting numeric features on comparable ranges → <strong>scaling / normalization</strong>.</li>
+        <li>Splitting date/time fields into usable parts (year, month, weekday).</li>
+        <li>Train/test splitting so preprocessing steps (like scalers) are <em>fit only on training data</em> to avoid data leakage.</li>
+      </ul>
+      <div class="box box-warn">
+        <div class="box-title">Common mistake: data leakage</div>
+        Never fit a scaler, encoder, or imputer on the <em>whole</em> dataset before splitting. Fit only on
+        the training set, then use that same fitted transformer to <code>.transform()</code> the test set.
+        Otherwise information from the test set "leaks" into training and your evaluation becomes overly optimistic.
+      </div>
+    </section>
+
+    <!-- ================= 1.7 ENCODING ================= -->
+    <section class="topic" id="encoding">
+      <h2 class="topic-title"><span class="tnum">1.7</span> Encoding &amp; Its Types</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Encoding converts categorical (text-based) columns into numeric form, since almost all ML algorithms
+        require numeric input.
+      </div>
+
+      <h3>1. Label Encoding</h3>
+      <p>Assigns each category an integer: e.g. <code>Red=0, Green=1, Blue=2</code>. Simple, but it implies
+      a false <strong>order/magnitude</strong> (Blue is not "greater than" Red) — safe mainly for
+      <strong>ordinal</strong> data that genuinely has order (Low &lt; Medium &lt; High).</p>
+      <pre class="code"><span class="k">from</span> sklearn.preprocessing <span class="k">import</span> LabelEncoder
+le = LabelEncoder()
+df[<span class="s">"size_encoded"</span>] = le.fit_transform(df[<span class="s">"size"</span>])  <span class="c"># Low, Medium, High → 0,1,2 (alphabetical!)</span></pre>
+
+      <h3>2. One-Hot Encoding</h3>
+      <p>Creates a new binary (0/1) column for every category, so no false order is implied. Best for
+      <strong>nominal</strong> data (no inherent order) with a small-to-moderate number of categories.</p>
+      <pre class="code">pd.get_dummies(df[<span class="s">"city"</span>], prefix=<span class="s">"city"</span>)
+<span class="c"># city_Delhi  city_Mumbai  city_Pune
+#     1            0            0
+#     0            1            0</span></pre>
+
+      <h3>3. Ordinal Encoding</h3>
+      <p>Like label encoding, but you explicitly define the order — used when the category order genuinely matters
+      (e.g. education level: <code>High School &lt; Bachelor's &lt; Master's &lt; PhD</code>).</p>
+
+      <h3>4. Target / Mean Encoding</h3>
+      <p>Replaces a category with the mean of the target variable for that category. Powerful for
+      high-cardinality columns (e.g. thousands of zip codes) but risks leakage/overfitting if not done
+      carefully with cross-validation folds.</p>
+
+      <div class="adv-grid">
+        <div class="adv-col good">
+          <h4>When to pick which</h4>
+          <ul>
+            <li>Ordinal data → Label/Ordinal encoding</li>
+            <li>Nominal, few categories → One-Hot</li>
+            <li>Nominal, very many categories → Target encoding or embeddings</li>
+          </ul>
+        </div>
+        <div class="adv-col bad">
+          <h4>Pitfalls</h4>
+          <ul>
+            <li>One-Hot on high-cardinality columns → huge sparse matrices ("curse of dimensionality")</li>
+            <li>Label Encoding on nominal data → tree models are fine, but linear/distance-based models will misread it as ordered</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 1.8 FEATURE TRANSFORMATION ================= -->
+    <section class="topic" id="feature-transformation">
+      <h2 class="topic-title"><span class="tnum">1.8</span> Feature Transformation</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Applying a mathematical function to a feature to change its distribution or relationship with the
+        target — usually to make skewed data more "normal" (bell-shaped), which many algorithms assume or
+        perform better under.
+      </div>
+      <ul>
+        <li><strong>Log transform</strong> — <code>log(x+1)</code> — compresses long right tails (income, prices).</li>
+        <li><strong>Square root transform</strong> — milder version of log, works for moderate skew.</li>
+        <li><strong>Box-Cox / Yeo-Johnson</strong> — a family of power transforms that automatically finds the best exponent to make data closer to normal.</li>
+      </ul>
+      <pre class="code"><span class="k">import</span> numpy <span class="k">as</span> np
+df[<span class="s">"income_log"</span>] = np.log1p(df[<span class="s">"income"</span>])  <span class="c"># log(1+x), safe for x=0</span></pre>
+    </section>
+
+    <!-- ================= 1.9 SCALING ================= -->
+    <section class="topic" id="scaling">
+      <h2 class="topic-title"><span class="tnum">1.9</span> Feature Scaling &amp; Normalization</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Scaling puts all numeric features on a comparable range so that features with naturally large values
+        (like "salary" in the 10,000s) don't dominate features with small values (like "age" in the tens)
+        purely due to their unit, not their actual importance.
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 620 210" xmlns="http://www.w3.org/2000/svg">
+          <text x="150" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#54565f">BEFORE SCALING</text>
+          <line x1="40" y1="150" x2="280" y2="150" stroke="#1B1D22"/>
+          <line x1="40" y1="150" x2="40" y2="40" stroke="#1B1D22"/>
+          <circle cx="55" cy="140" r="4" fill="#AC4638"/>
+          <circle cx="60" cy="130" r="4" fill="#AC4638"/>
+          <circle cx="260" cy="60" r="4" fill="#1F7A6C"/>
+          <circle cx="270" cy="50" r="4" fill="#1F7A6C"/>
+          <text x="55" y="168" font-family="IBM Plex Mono" font-size="9" fill="#54565f">age (10s)</text>
+          <text x="200" y="45" font-family="IBM Plex Mono" font-size="9" fill="#54565f">salary (10,000s)</text>
+
+          <text x="470" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#54565f">AFTER SCALING</text>
+          <line x1="360" y1="150" x2="600" y2="150" stroke="#1B1D22"/>
+          <line x1="360" y1="150" x2="360" y2="40" stroke="#1B1D22"/>
+          <circle cx="390" cy="120" r="4" fill="#AC4638"/>
+          <circle cx="400" cy="130" r="4" fill="#AC4638"/>
+          <circle cx="420" cy="70" r="4" fill="#1F7A6C"/>
+          <circle cx="430" cy="80" r="4" fill="#1F7A6C"/>
+          <text x="360" y="168" font-family="IBM Plex Mono" font-size="9" fill="#54565f">both features now 0–1 range</text>
+        </svg>
+        <figcaption>Scaling brings differently-unit features onto one range so distance/gradient-based models treat them fairly.</figcaption>
+      </figure>
+
+      <h3>Standardization (Z-score scaling)</h3>
+      <div class="math">
+        z = (x − μ) / σ
+        <div class="step">μ = mean of the feature, σ = standard deviation. Result: mean 0, std 1.</div>
+      </div>
+      <pre class="code"><span class="k">from</span> sklearn.preprocessing <span class="k">import</span> StandardScaler
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled  = scaler.transform(X_test)  <span class="c"># fit on train ONLY</span></pre>
+
+      <h3>Normalization (Min-Max scaling)</h3>
+      <div class="math">
+        x' = (x − x_min) / (x_max − x_min)
+        <div class="step">Squashes every value into a fixed [0, 1] range.</div>
+      </div>
+      <pre class="code"><span class="k">from</span> sklearn.preprocessing <span class="k">import</span> MinMaxScaler
+scaler = MinMaxScaler()
+X_train_scaled = scaler.fit_transform(X_train)</pre>
+
+      <table>
+        <tr><th>Standardization</th><th>Normalization (Min-Max)</th></tr>
+        <tr><td>Not bounded to a fixed range</td><td>Bounded to [0, 1]</td></tr>
+        <tr><td>Less sensitive to outliers</td><td>Very sensitive to outliers (they stretch the range)</td></tr>
+        <tr><td>Preferred for: linear/logistic regression, SVM, PCA, neural nets</td><td>Preferred for: algorithms needing bounded inputs, image pixel data</td></tr>
+      </table>
+
+      <div class="box box-tip">
+        <div class="box-title">Do tree-based models need scaling?</div>
+        No. Decision Trees, Random Forest, XGBoost split on raw threshold values and are unaffected by
+        feature scale. Scaling matters for distance-based (KNN, K-Means), gradient-based (linear/logistic
+        regression, neural nets), and variance-based (PCA) algorithms.
+      </div>
+    </section>
+
+    <!-- ================= 1.10 FEATURE ENGINEERING ================= -->
+    <section class="topic" id="feature-engineering">
+      <h2 class="topic-title"><span class="tnum">1.10</span> Feature Engineering</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Creating new, more informative features from existing raw data using domain knowledge — often the
+        single highest-leverage step in the whole pipeline, more impactful than swapping algorithms.
+      </div>
+      <ul>
+        <li><strong>Combining columns</strong> — <code>BMI = weight / height²</code></li>
+        <li><strong>Extracting from dates</strong> — day of week, is-weekend, month, days-since-signup</li>
+        <li><strong>Binning</strong> — turning continuous age into buckets: child/adult/senior</li>
+        <li><strong>Text features</strong> — word count, presence of a keyword</li>
+        <li><strong>Interaction features</strong> — multiplying two features that jointly affect the target</li>
+      </ul>
+      <div class="box box-tip">
+        <div class="box-title">The 80/20 of ML</div>
+        Practitioners often say: "better features beat a better algorithm." A simple linear regression with
+        well-engineered features frequently beats a complex model trained on raw, unprocessed columns.
+      </div>
+    </section>
+
+    <!-- ================= 1.11 FEATURE SELECTION ================= -->
+    <section class="topic" id="feature-selection">
+      <h2 class="topic-title"><span class="tnum">1.11</span> Feature Selection</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Choosing the subset of features that actually contribute useful signal to predicting the target,
+        and dropping the rest — reduces overfitting, training time, and noise.
+      </div>
+
+      <h3>1. Filter Methods</h3>
+      <p>Select features using statistical tests, <strong>independent of any ML model</strong> — fast and
+      model-agnostic. Rank features and keep the top-K.</p>
+      <ul>
+        <li><strong>Correlation coefficient</strong> — drop features with near-zero correlation to the target, or drop one of two features highly correlated with each other (multicollinearity).</li>
+        <li><strong>Chi-Square test</strong> — for categorical feature vs. categorical target.</li>
+        <li><strong>ANOVA F-test</strong> — for numeric feature vs. categorical target.</li>
+        <li><strong>Variance Threshold</strong> — drop features that barely vary (near-constant columns carry no information).</li>
+      </ul>
+      <pre class="code"><span class="k">from</span> sklearn.feature_selection <span class="k">import</span> SelectKBest, f_classif
+selector = SelectKBest(score_func=f_classif, k=<span class="s">10</span>)
+X_selected = selector.fit_transform(X_train, y_train)</pre>
+
+      <h3>2. Wrapper Methods</h3>
+      <p>Use the actual ML model's performance to evaluate feature subsets — slower but accounts for feature
+      interactions. Example: <strong>Recursive Feature Elimination (RFE)</strong> — repeatedly trains the
+      model, drops the least important feature, and repeats.</p>
+      <pre class="code"><span class="k">from</span> sklearn.feature_selection <span class="k">import</span> RFE
+<span class="k">from</span> sklearn.linear_model <span class="k">import</span> LogisticRegression
+rfe = RFE(estimator=LogisticRegression(), n_features_to_select=<span class="s">10</span>)
+X_selected = rfe.fit_transform(X_train, y_train)</pre>
+
+      <h3>3. Embedded Methods</h3>
+      <p>Feature selection happens <strong>as part of model training itself</strong> — the algorithm
+      naturally assigns low/zero importance to useless features.</p>
+      <ul>
+        <li><strong>Lasso Regression (L1 regularization)</strong> — shrinks unimportant feature coefficients exactly to zero.</li>
+        <li><strong>Tree-based feature importance</strong> — Random Forest / XGBoost expose a <code>feature_importances_</code> score for free after training.</li>
+      </ul>
+      <pre class="code"><span class="k">from</span> sklearn.linear_model <span class="k">import</span> Lasso
+lasso = Lasso(alpha=<span class="s">0.01</span>)
+lasso.fit(X_train, y_train)
+<span class="c"># coefficients that became exactly 0 → those features were "deselected"</span></pre>
+
+      <table>
+        <tr><th>Method</th><th>Speed</th><th>Considers feature interactions?</th><th>Tied to a specific model?</th></tr>
+        <tr><td>Filter</td><td>Fastest</td><td>No</td><td>No</td></tr>
+        <tr><td>Wrapper</td><td>Slowest</td><td>Yes</td><td>Yes (re-trains repeatedly)</td></tr>
+        <tr><td>Embedded</td><td>Fast (one training run)</td><td>Yes</td><td>Yes</td></tr>
+      </table>
+
+      <div class="check">
+        <div class="box-title">Check your understanding</div>
+        Why must a scaler or encoder be <code>fit</code> only on the training set, never on the full dataset?
+        <em>(Answer: fitting on test data lets test-set statistics leak into training, giving an overly
+        optimistic — and dishonest — evaluation of the model.)</em>
+      </div>
+    </section>
+
+    <div class="module-nav">
+      <a href="index.html"><span class="lbl">Back</span>All Modules</a>
+      <a href="module-02-regression.html" style="text-align:right;"><span class="lbl">Next</span>Module 02 — Regression &amp; Optimization →</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<a href="https://buymemomo.com/vabin" class="momo-widget">
+  <img src="https://buymemomo.com/logo.png" alt="Buy me a momo" title="Buy me a momo">
+  <span class="momo-text">Buy me a momo</span>
+</a>
+</body>
+</html>

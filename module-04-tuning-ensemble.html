@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 04 — Model Tuning &amp; Ensemble Learning</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+<nav class="rail">
+  <div class="rail-brand">AI / ML Roadmap</div>
+  <div class="rail-sub">7 modules · sequential path</div>
+  <div class="rail-module"><a href="index.html" data-n="—">Overview / Home</a></div>
+  <div class="rail-module"><a href="module-01-foundations.html" data-n="01">Foundations &amp; Feature Engineering</a></div>
+  <div class="rail-module"><a href="module-02-regression.html" data-n="02">Regression &amp; Optimization</a></div>
+  <div class="rail-module"><a href="module-03-classification.html" data-n="03">Classification Algorithms</a></div>
+  <div class="rail-module"><a href="module-04-tuning-ensemble.html" class="active" data-n="04">Tuning &amp; Ensemble Learning</a></div>
+  <div class="rail-module"><a href="module-05-unsupervised-nlp.html" data-n="05">Unsupervised Learning &amp; NLP</a></div>
+  <div class="rail-module"><a href="module-06-deep-learning-1.html" data-n="06">Deep Learning I — ANN</a></div>
+  <div class="rail-module"><a href="module-07-cnn.html" data-n="07">Deep Learning II — CNN</a></div>
+  <div class="rail-note">On this page: cross-validation · GridSearchCV · RandomizedSearchCV · bagging · boosting · stacking · Random Forest · AdaBoost · Gradient Boosting · XGBoost.</div>
+</nav>
+<div class="main">
+  <div class="topbar"><span>MODULE 04 / 07</span><a href="index.html">← All modules</a></div>
+  <div class="content">
+    <div class="eyebrow">Module 04</div>
+    <h1 class="page-title">Model Tuning &amp; Ensemble Learning</h1>
+    <p class="page-dek">A single model has a ceiling. This module covers squeezing more performance out of
+    one model (tuning) and combining many models into one stronger one (ensembling).</p>
+
+    <section class="topic" id="cross-validation">
+      <h2 class="topic-title"><span class="tnum">4.1</span> Cross-Validation</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Cross-validation (CV) evaluates a model more reliably than a single train/test split by splitting
+        the data into <strong>K folds</strong>, training on K−1 of them and testing on the remaining fold,
+        rotating which fold is held out, and averaging the K results.
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 500 160" xmlns="http://www.w3.org/2000/svg">
+          <g font-family="IBM Plex Mono" font-size="9">
+          <!-- 5 rows, 5 folds each -->
+          <g transform="translate(0,0)">
+          <text x="10" y="15" fill="#54565f">Fold 1</text>
+          <rect x="70" y="4" width="70" height="18" fill="#AC4638"/><rect x="140" y="4" width="280" height="18" fill="#E4F1EE" stroke="#1F7A6C"/>
+          <text x="10" y="43" fill="#54565f">Fold 2</text>
+          <rect x="70" y="32" width="70" height="18" fill="#E4F1EE" stroke="#1F7A6C"/><rect x="140" y="32" width="70" height="18" fill="#AC4638"/><rect x="210" y="32" width="210" height="18" fill="#E4F1EE" stroke="#1F7A6C"/>
+          <text x="10" y="71" fill="#54565f">Fold 3</text>
+          <rect x="70" y="60" width="140" height="18" fill="#E4F1EE" stroke="#1F7A6C"/><rect x="210" y="60" width="70" height="18" fill="#AC4638"/><rect x="280" y="60" width="140" height="18" fill="#E4F1EE" stroke="#1F7A6C"/>
+          <text x="10" y="99" fill="#54565f">Fold 4</text>
+          <rect x="70" y="88" width="210" height="18" fill="#E4F1EE" stroke="#1F7A6C"/><rect x="280" y="88" width="70" height="18" fill="#AC4638"/><rect x="350" y="88" width="70" height="18" fill="#E4F1EE" stroke="#1F7A6C"/>
+          <text x="10" y="127" fill="#54565f">Fold 5</text>
+          <rect x="70" y="116" width="280" height="18" fill="#E4F1EE" stroke="#1F7A6C"/><rect x="350" y="116" width="70" height="18" fill="#AC4638"/>
+          </g>
+          </g>
+        </svg>
+        <figcaption>5-fold cross-validation: the red block is the held-out test fold for that round; teal blocks are used for training. Every data point is tested on exactly once.</figcaption>
+      </figure>
+
+      <pre class="code"><span class="k">from</span> sklearn.model_selection <span class="k">import</span> cross_val_score
+scores = cross_val_score(model, X, y, cv=<span class="s">5</span>, scoring=<span class="s">"accuracy"</span>)
+print(scores.mean(), scores.std())  <span class="c"># mean performance + how stable it is across folds</span></pre>
+
+      <div class="box box-tip">
+        <div class="box-title">Why not just one train/test split?</div>
+        A single split gives one noisy estimate — you might get lucky or unlucky with which rows land in
+        test. CV averages over multiple splits, giving both a more reliable mean score and a sense of variance.
+      </div>
+    </section>
+
+    <section class="topic" id="hyperparameter-tuning">
+      <h2 class="topic-title"><span class="tnum">4.2</span> Hyperparameter Tuning</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Hyperparameters are settings you choose <em>before</em> training (like K in KNN, max_depth in a
+        tree, or the learning rate) — unlike model parameters (weights), they aren't learned from data
+        automatically. Tuning searches for the combination that performs best, using cross-validation to score each candidate.
+      </div>
+
+      <h3>Grid Search CV</h3>
+      <p>Exhaustively tries <strong>every combination</strong> in a predefined grid of hyperparameter values.
+      Guaranteed to find the best combination within the grid, but the number of combinations explodes
+      quickly as you add more hyperparameters or more values per hyperparameter.</p>
+      <pre class="code"><span class="k">from</span> sklearn.model_selection <span class="k">import</span> GridSearchCV
+param_grid = {<span class="s">"n_estimators"</span>: [<span class="s">100</span>,<span class="s">200</span>,<span class="s">300</span>], <span class="s">"max_depth"</span>: [<span class="s">3</span>,<span class="s">5</span>,<span class="s">7</span>]}
+grid = GridSearchCV(model, param_grid, cv=<span class="s">5</span>, scoring=<span class="s">"f1"</span>)
+grid.fit(X_train, y_train)
+print(grid.best_params_, grid.best_score_)</pre>
+
+      <h3>Randomized Search CV</h3>
+      <p>Instead of trying every combination, it samples a fixed number of <strong>random combinations</strong>
+      from the specified ranges — much faster, and in practice often finds a near-optimal combination far
+      quicker than an exhaustive grid, especially when many hyperparameters barely affect performance.</p>
+      <pre class="code"><span class="k">from</span> sklearn.model_selection <span class="k">import</span> RandomizedSearchCV
+random_search = RandomizedSearchCV(model, param_distributions=param_grid, n_iter=<span class="s">20</span>, cv=<span class="s">5</span>)
+random_search.fit(X_train, y_train)</pre>
+
+      <table>
+        <tr><th>Grid Search</th><th>Randomized Search</th></tr>
+        <tr><td>Exhaustive — tries all combinations</td><td>Samples a fixed number of random combinations</td></tr>
+        <tr><td>Guaranteed best-in-grid result</td><td>May miss the absolute best, usually close enough</td></tr>
+        <tr><td>Expensive as grid grows</td><td>Cost is fixed regardless of parameter space size</td></tr>
+      </table>
+    </section>
+
+    <section class="topic" id="ensemble-intro">
+      <h2 class="topic-title"><span class="tnum">4.3</span> Ensemble Learning</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Ensemble learning combines multiple models ("weak learners") into one stronger model. The core idea:
+        different models make different errors, so combining their predictions (by voting or averaging)
+        cancels out individual mistakes and improves overall accuracy and stability.
+      </div>
+      <div class="box box-tip">
+        <div class="box-title">What's a "weak learner"?</div>
+        A model that performs only slightly better than random guessing on its own (e.g. a decision stump —
+        a tree with just one split). Ensembles combine many weak learners into a collectively strong model.
+      </div>
+
+      <h3>Three families of ensembling</h3>
+      <table>
+        <tr><th>Type</th><th>Idea</th><th>Example algorithms</th></tr>
+        <tr><td>Bagging</td><td>Train many models in <strong>parallel</strong> on random subsets of data, then average/vote — reduces variance</td><td>Random Forest</td></tr>
+        <tr><td>Boosting</td><td>Train models <strong>sequentially</strong>, each one focusing on the previous model's mistakes — reduces bias</td><td>AdaBoost, Gradient Boosting, XGBoost</td></tr>
+        <tr><td>Stacking</td><td>Train several different models, then train a "meta-model" that learns how to best combine their predictions</td><td>Stacked ensembles / blending</td></tr>
+      </table>
+    </section>
+
+    <section class="topic" id="bagging-rf">
+      <h2 class="topic-title"><span class="tnum">4.4</span> Bagging &amp; Random Forest</h2>
+      <div class="box box-def">
+        <div class="box-title">Bagging (Bootstrap Aggregating)</div>
+        Draw many random samples <strong>with replacement</strong> (bootstrap samples) from the training
+        data, train one model per sample independently, then combine their outputs (majority vote for
+        classification, average for regression).
+      </div>
+
+      <div class="box box-def">
+        <div class="box-title">Random Forest</div>
+        A bagging ensemble of decision trees, with one extra trick: each tree also only considers a
+        <strong>random subset of features</strong> at every split. This decorrelates the trees so their
+        errors are less alike, making the averaged result more robust than plain bagging of trees.
+      </div>
+
+      <pre class="code"><span class="k">from</span> sklearn.ensemble <span class="k">import</span> RandomForestClassifier
+model = RandomForestClassifier(n_estimators=<span class="s">200</span>, max_depth=<span class="s">10</span>, max_features=<span class="s">"sqrt"</span>)
+model.fit(X_train, y_train)
+importances = model.feature_importances_  <span class="c"># free feature ranking</span></pre>
+
+      <div class="adv-grid">
+        <div class="adv-col good"><h4>Advantages</h4><ul><li>Reduces overfitting compared to a single tree</li><li>Handles high-dimensional data well</li><li>Provides feature importance for free</li></ul></div>
+        <div class="adv-col bad"><h4>Disadvantages</h4><ul><li>Less interpretable than a single tree</li><li>Slower to predict than a single model</li><li>Can still struggle with very high-cardinality categorical features</li></ul></div>
+      </div>
+    </section>
+
+    <section class="topic" id="boosting">
+      <h2 class="topic-title"><span class="tnum">4.5</span> Boosting: AdaBoost, Gradient Boosting &amp; XGBoost</h2>
+
+      <h3>AdaBoost (Adaptive Boosting)</h3>
+      <p>Trains weak learners (typically decision stumps) one at a time. After each round, it
+      <strong>increases the weight</strong> of the misclassified samples so the next learner focuses harder
+      on the examples the previous one got wrong. The final prediction is a weighted vote of all learners,
+      weighted by each learner's accuracy.</p>
+
+      <figure>
+        <svg viewBox="0 0 500 130" xmlns="http://www.w3.org/2000/svg">
+          <g font-family="IBM Plex Mono" font-size="10" fill="#54565f">
+          <rect x="10" y="20" width="90" height="50" rx="4" fill="#E4F1EE" stroke="#1F7A6C"/><text x="55" y="50" text-anchor="middle">Learner 1</text>
+          <rect x="140" y="20" width="90" height="50" rx="4" fill="#FBF0E1" stroke="#B2661E"/><text x="185" y="50" text-anchor="middle">Learner 2</text>
+          <rect x="270" y="20" width="90" height="50" rx="4" fill="#FAECE9" stroke="#AC4638"/><text x="315" y="50" text-anchor="middle">Learner 3</text>
+          <rect x="400" y="30" width="90" height="35" rx="4" fill="#1B1D22"/><text x="445" y="52" text-anchor="middle" fill="#fff">Weighted Vote</text>
+          <text x="118" y="45" font-size="16">→</text><text x="248" y="45" font-size="16">→</text><text x="378" y="45" font-size="16">→</text>
+          <text x="55" y="90" font-size="8.5">focuses on all data</text>
+          <text x="185" y="90" font-size="8.5">re-weights errors of #1</text>
+          <text x="315" y="90" font-size="8.5">re-weights errors of #2</text>
+          </g>
+        </svg>
+        <figcaption>Boosting chains learners sequentially — each new one is trained to fix the previous ensemble's mistakes.</figcaption>
+      </figure>
+
+      <pre class="code"><span class="k">from</span> sklearn.ensemble <span class="k">import</span> AdaBoostClassifier
+model = AdaBoostClassifier(n_estimators=<span class="s">100</span>, learning_rate=<span class="s">1.0</span>)
+model.fit(X_train, y_train)</pre>
+
+      <h3>Gradient Boosting</h3>
+      <p>Instead of re-weighting samples, each new tree is trained to predict the <strong>residual errors</strong>
+      (the gap between actual and current prediction) of the ensemble so far — literally doing gradient
+      descent, but in "function space" rather than parameter space.</p>
+      <pre class="code"><span class="k">from</span> sklearn.ensemble <span class="k">import</span> GradientBoostingClassifier
+model = GradientBoostingClassifier(n_estimators=<span class="s">200</span>, learning_rate=<span class="s">0.1</span>, max_depth=<span class="s">3</span>)
+model.fit(X_train, y_train)</pre>
+
+      <h3>XGBoost (Extreme Gradient Boosting)</h3>
+      <p>A highly optimized, regularized implementation of gradient boosting — adds L1/L2 regularization on
+      tree weights to fight overfitting, handles missing values natively, and is engineered for speed
+      (parallelized tree construction). It's one of the most consistently winning algorithms on tabular data competitions.</p>
+      <pre class="code"><span class="k">import</span> xgboost <span class="k">as</span> xgb
+model = xgb.XGBClassifier(n_estimators=<span class="s">300</span>, learning_rate=<span class="s">0.05</span>, max_depth=<span class="s">4</span>, reg_lambda=<span class="s">1.0</span>)
+model.fit(X_train, y_train)</pre>
+      <p>Official docs: <a href="https://xgboost.readthedocs.io/en/stable/" target="_blank">xgboost.readthedocs.io</a></p>
+
+      <div class="adv-grid">
+        <div class="adv-col good"><h4>Advantages of boosting</h4><ul><li>Usually higher accuracy than bagging on tabular data</li><li>XGBoost/LightGBM handle missing values &amp; are very fast</li></ul></div>
+        <div class="adv-col bad"><h4>Disadvantages</h4><ul><li>Sequential training → can't parallelize across learners like bagging</li><li>More prone to overfitting on noisy data if not regularized/tuned</li><li>More hyperparameters to tune than bagging</li></ul></div>
+      </div>
+    </section>
+
+    <section class="topic" id="stacking">
+      <h2 class="topic-title"><span class="tnum">4.6</span> Stacking</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Train several diverse base models (e.g. logistic regression, random forest, SVM), then feed their
+        predictions as input features into a final "meta-model" that learns the best way to blend them.
+      </div>
+      <pre class="code"><span class="k">from</span> sklearn.ensemble <span class="k">import</span> StackingClassifier
+<span class="k">from</span> sklearn.linear_model <span class="k">import</span> LogisticRegression
+estimators = [(<span class="s">"rf"</span>, RandomForestClassifier()), (<span class="s">"svc"</span>, SVC(probability=<span class="k">True</span>))]
+stack = StackingClassifier(estimators=estimators, final_estimator=LogisticRegression())
+stack.fit(X_train, y_train)</pre>
+      <div class="box box-tip">
+        <div class="box-title">Stacking vs. bagging/boosting</div>
+        Bagging/boosting combine <em>many copies of the same kind</em> of weak learner. Stacking typically
+        combines <em>different kinds</em> of models entirely, betting that their different "views" of the data complement each other.
+      </div>
+    </section>
+
+    <div class="module-nav">
+      <a href="module-03-classification.html"><span class="lbl">Back</span>Module 03</a>
+      <a href="module-05-unsupervised-nlp.html" style="text-align:right;"><span class="lbl">Next</span>Module 05 — Unsupervised &amp; NLP →</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<a href="https://buymemomo.com/vabin" class="momo-widget">
+  <img src="https://buymemomo.com/logo.png" alt="Buy me a momo" title="Buy me a momo">
+  <span class="momo-text">Buy me a momo</span>
+</a>
+</body>
+</html>

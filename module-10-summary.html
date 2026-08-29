@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 10 — Full Recap Summary</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+<nav class="rail">
+  <div class="rail-brand">AI / ML Roadmap</div>
+  <div class="rail-sub">10 modules · sequential path</div>
+
+  <div class="rail-module"><a href="index.html" data-n="—">Overview / Home</a></div>
+  <div class="rail-module"><a href="module-01-foundations.html" data-n="01">Foundations &amp; Feature Engineering</a></div>
+  <div class="rail-module"><a href="module-02-regression.html" data-n="02">Regression &amp; Optimization</a></div>
+  <div class="rail-module"><a href="module-03-classification.html" data-n="03">Classification Algorithms</a></div>
+  <div class="rail-module"><a href="module-04-tuning-ensemble.html" data-n="04">Tuning &amp; Ensemble Learning</a></div>
+  <div class="rail-module"><a href="module-05-unsupervised-nlp.html" data-n="05">Unsupervised Learning &amp; NLP</a></div>
+  <div class="rail-module"><a href="module-06-deep-learning-1.html" data-n="06">Deep Learning I — ANN</a></div>
+  <div class="rail-module"><a href="module-07-cnn.html" data-n="07">Deep Learning II — CNN</a></div>
+  <div class="rail-module"><a href="module-08-rnn.html" data-n="08">Deep Learning III — RNN / LSTM / GRU</a></div>
+  <div class="rail-module"><a href="module-09-transformers.html" data-n="09">Deep Learning IV — Transformers</a></div>
+  <div class="rail-module"><a href="module-10-summary.html" class="active" data-n="10">Full Roadmap Summary</a></div>
+
+  <div class="rail-note">A condensed, one-page recap of every module — linear regression through transformers — for quick review before an interview or exam.</div>
+</nav>
+<div class="main">
+  <div class="topbar"><span>MODULE 10 / 10</span><a href="index.html">← All modules</a></div>
+  <div class="content">
+    <div class="eyebrow">Module 10 · Recap</div>
+    <h1 class="page-title">Full Roadmap Summary</h1>
+    <p class="page-dek">Everything above, compressed to the one idea per topic worth remembering. Use this
+    page for a fast recap — if any line doesn't fully make sense, that's your cue to revisit that module.</p>
+
+    
+
+    <section class="topic" id="recap-01">
+      <h2 class="topic-title"><span class="tnum">01</span> ML Foundations &amp; Feature Engineering</h2>
+      <ul>
+        <li>ML = learning a function from examples instead of hand-coding rules. AI ⊃ ML ⊃ DL.</li>
+        <li>Supervised (labeled data: regression/classification) vs. unsupervised (no labels: clustering/dim. reduction) vs. reinforcement learning (reward-driven trial and error).</li>
+        <li>EDA: understand shape/types → descriptive stats → univariate/bivariate analysis → missing values → outliers → correlations.</li>
+        <li>Pipeline: problem → data → EDA/clean/preprocess → feature engineering → split → train → evaluate → tune → deploy (a loop, not a line).</li>
+        <li>Cleaning fixes correctness (duplicates, wrong types, missing values); preprocessing fixes format (encoding, scaling) — always fit transformers on train data only, to avoid leakage.</li>
+        <li>Encoding: Label/Ordinal (order matters), One-Hot (no order, few categories), Target encoding (high cardinality).</li>
+        <li>Scaling: Standardization (mean 0, std 1, robust to outliers) vs. Normalization (bounded 0–1, sensitive to outliers). Tree models don't need scaling; distance/gradient-based models do.</li>
+        <li>Feature selection: Filter (fast, statistical, model-agnostic) → Wrapper (uses model performance, e.g. RFE) → Embedded (built into training, e.g. Lasso, tree importances).</li>
+      </ul>
+    </section>
+
+    <section class="topic" id="recap-02">
+      <h2 class="topic-title"><span class="tnum">02</span> Regression &amp; Optimization</h2>
+      <ul>
+        <li>Linear regression: ŷ = w·x + b — find w, b that minimize the cost function.</li>
+        <li>Cost function (MSE) = average squared residual; training = minimizing this over all data.</li>
+        <li>Gradient descent: repeatedly step opposite the gradient (w := w − α·∂J/∂w) to reach the global minimum. Learning rate α controls step size — too small is slow, too large diverges.</li>
+        <li>Evaluate with MAE, MSE, RMSE, R².</li>
+        <li>Underfitting = high bias (too simple); overfitting = high variance (memorizes noise). The bias-variance tradeoff is the central tension in all of ML.</li>
+      </ul>
+    </section>
+
+    <section class="topic" id="recap-03">
+      <h2 class="topic-title"><span class="tnum">03</span> Classification Algorithms</h2>
+      <ul>
+        <li>Logistic regression: sigmoid squashes a linear function into a 0–1 probability; trained with log loss (binary cross-entropy), not MSE.</li>
+        <li>Confusion matrix → Accuracy, Precision (of predicted positives, how many correct), Recall (of actual positives, how many caught), F1 (harmonic mean of the two).</li>
+        <li>KNN: classify by majority vote of the K nearest points — needs feature scaling, no real "training" phase.</li>
+        <li>Naive Bayes: Bayes' theorem + (naive) feature independence assumption — fast, strong on text.</li>
+        <li>Decision Trees: split on the feature/threshold with highest Information Gain (entropy reduction); interpretable but prone to overfitting unpruned.</li>
+        <li>SVM: finds the max-margin hyperplane; only support vectors matter; kernel trick handles non-linear boundaries.</li>
+      </ul>
+    </section>
+
+    <section class="topic" id="recap-04">
+      <h2 class="topic-title"><span class="tnum">04</span> Model Tuning &amp; Ensemble Learning</h2>
+      <ul>
+        <li>Cross-validation: average performance over K train/test rotations — more reliable than one split.</li>
+        <li>GridSearchCV (exhaustive) vs. RandomizedSearchCV (samples combinations, cheaper at scale) for hyperparameter tuning.</li>
+        <li>Bagging (parallel, reduces variance) → Random Forest = bagged trees + random feature subsets per split.</li>
+        <li>Boosting (sequential, reduces bias): AdaBoost re-weights misclassified samples; Gradient Boosting fits new trees to residual errors; XGBoost = regularized, optimized gradient boosting.</li>
+        <li>Stacking: train a meta-model to combine predictions from several different base models.</li>
+      </ul>
+    </section>
+
+    <section class="topic" id="recap-05">
+      <h2 class="topic-title"><span class="tnum">05</span> Unsupervised Learning &amp; NLP</h2>
+      <ul>
+        <li>K-Means: assign → recompute centroid → repeat; choose K via the elbow method. Assumes spherical, similar-sized clusters.</li>
+        <li>DBSCAN: density-based, finds arbitrary shapes, auto-detects outliers, no need to pre-specify K.</li>
+        <li>PCA: compress features into variance-ranked components — gains speed/visualization, loses direct interpretability.</li>
+        <li>NLP pipeline: get data → clean text (lowercase, remove stopwords, lemmatize) → tokenize → vectorize → model.</li>
+        <li>Vectorization: One-Hot (presence only) → Bag of Words (adds frequency) → TF-IDF (also down-weights common words). None capture meaning or order — that's what embeddings and Transformers solve.</li>
+      </ul>
+    </section>
+
+    <section class="topic" id="recap-06">
+      <h2 class="topic-title"><span class="tnum">06</span> Deep Learning I — ANN</h2>
+      <ul>
+        <li>Perceptron: weighted sum + bias → activation. Stacked perceptrons in layers = ANN.</li>
+        <li>Forward prop computes the prediction; backprop uses the chain rule to compute ∂Loss/∂weight for every weight, layer by layer, backward.</li>
+        <li>Vanishing gradients: many layers of small derivatives multiplied together shrink toward zero — early layers stop learning. Motivates ReLU over sigmoid/tanh in hidden layers.</li>
+        <li>Activations: Linear (regression output), Sigmoid (binary output), Tanh (zero-centered, still saturates), ReLU (default hidden layer, can "die"), Leaky ReLU/PReLU (fix dying ReLU), Swish (smooth, strong on deep nets).</li>
+        <li>Losses: MAE/MSE/MSLE (regression), Binary/Categorical Cross-Entropy (classification).</li>
+        <li>Optimizers: Batch GD (stable, slow) → SGD (fast, noisy) → Mini-batch (practical default) → Momentum (smooths path) → AdaGrad (adapts LR per parameter, shrinks forever) → Adam (momentum + adaptive LR — today's default).</li>
+      </ul>
+    </section>
+
+    <section class="topic" id="recap-07">
+      <h2 class="topic-title"><span class="tnum">07</span> Deep Learning II — CNN</h2>
+      <ul>
+        <li>Convolution layer: a small filter slides across the image, weight-sharing keeps parameter count low, output is a feature map.</li>
+        <li>Padding ("same" vs "valid") controls output size and border information loss; stride controls how far the filter moves each step.</li>
+        <li>Pooling (usually Max) downsamples feature maps, reduces computation, adds mild translation invariance.</li>
+        <li>Architecture: repeated Conv→ReLU→Pool blocks (simple → complex features) → Flatten → Dense layers → output.</li>
+      </ul>
+    </section>
+
+    <section class="topic" id="recap-08">
+      <h2 class="topic-title"><span class="tnum">08</span> Deep Learning III — RNN / LSTM / GRU</h2>
+      <ul>
+        <li>Sequential data: order carries meaning. RNNs carry a hidden state hₜ forward across time steps, reusing the same weights at every step (parameter sharing over time).</li>
+        <li>Vanilla RNNs suffer vanishing/exploding gradients across long sequences (BPTT multiplies gradients across every time step) — they forget long-range context.</li>
+        <li>LSTM fixes this with a cell state ("memory highway") plus Forget/Input/Output gates that control what's kept, added, and exposed.</li>
+        <li>GRU simplifies LSTM to two gates (Update, Reset) and one merged state — fewer parameters, comparable performance on many tasks.</li>
+      </ul>
+    </section>
+
+    <section class="topic" id="recap-09">
+      <h2 class="topic-title"><span class="tnum">09</span> Deep Learning IV — Transformers</h2>
+      <ul>
+        <li>Seq2Seq (encoder→context vector→decoder) bottlenecks all information into one fixed-size vector — attention removes that bottleneck by letting the decoder look at every input position directly.</li>
+        <li>Embeddings represent tokens as dense vectors where similar meanings sit close together — a major upgrade over One-Hot/BoW/TF-IDF.</li>
+        <li>Self-attention: Attention(Q,K,V) = softmax(Q·Kᵀ/√dₖ)·V — every token compares its Query against every other token's Key to decide how much of each token's Value to absorb.</li>
+        <li>Multi-head attention runs several attention computations in parallel, each learning different relationships.</li>
+        <li>Transformer block = Multi-Head Attention → Add &amp; Norm → Feed-Forward Network → Add &amp; Norm, stacked N times; positional encoding injects order since attention alone is order-blind; residual connections fight vanishing gradients in deep stacks.</li>
+        <li>Decoder uses masked self-attention (can't see future tokens) + attention over the encoder's output.</li>
+        <li>Autoregressive generation (GPT-style: one token at a time, conditioned on all previous tokens) vs. non-autoregressive (all tokens at once — faster, sometimes lower quality).</li>
+      </ul>
+    </section>
+
+    <section class="topic" id="the-thread">
+      <h2 class="topic-title"><span class="tnum">—</span> The One Thread Running Through All 10 Modules</h2>
+      <div class="box box-def">
+        Every model in this roadmap does the same three things: (1) turn raw input into numbers, (2) combine
+        those numbers through learnable weights, and (3) adjust those weights using gradient descent to
+        reduce a loss function. Linear regression, logistic regression, a neural network, an LSTM, and a
+        Transformer are all, underneath, gradient descent on a loss function — they differ mainly in
+        <em>how</em> they combine the numbers (a line, a sigmoid curve, layers of neurons, a gated memory
+        cell, or an attention-weighted sum). Once that thread clicks, every new architecture is a variation
+        on a theme you already understand.
+      </div>
+    </section>
+
+    <div class="module-nav">
+      <a href="module-09-transformers.html"><span class="lbl">Back</span>Module 09</a>
+      <a href="index.html" style="text-align:right;"><span class="lbl">Finish</span>Back to Overview →</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<a href="https://buymemomo.com/vabin" class="momo-widget">
+  <img src="https://buymemomo.com/logo.png" alt="Buy me a momo" title="Buy me a momo">
+  <span class="momo-text">Buy me a momo</span>
+</a>
+</body>
+</html>

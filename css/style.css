@@ -232,6 +232,24 @@ figcaption{font-size:.82rem; color:var(--ink-soft); margin-top:10px; font-style:
 .hero{padding:70px 0 40px; border-bottom:1px solid var(--line);}
 .hero .eyebrow{margin-bottom:16px;}
 .hero h1{font-family:'Source Serif 4',serif; font-size:3rem; line-height:1.1; margin:0 0 18px; max-width:680px;}
+.hero h1 .author-line{
+  display:inline-block;
+  margin-left:10px;
+  font-family:'IBM Plex Sans', sans-serif;
+  font-size:0.9rem;
+  line-height:1.4;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  font-weight:600;
+  vertical-align:middle;
+}
+.hero h1 .author-line a{
+  color:var(--teal);
+  text-decoration:none;
+  font-weight:700;
+}
+.hero h1 .author-line a:hover{color:var(--ink);}
 .hero p.lead{font-size:1.15rem; color:var(--ink-soft); max-width:600px;}
 .module-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:48px 0;}
 @media(max-width:700px){.module-grid{grid-template-columns:1fr;}}

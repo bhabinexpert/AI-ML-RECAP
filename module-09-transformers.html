@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 09 — Deep Learning IV: Transformers</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+<nav class="rail">
+  <div class="rail-brand">AI / ML Roadmap</div>
+  <div class="rail-sub">10 modules · sequential path</div>
+
+  <div class="rail-module"><a href="index.html" data-n="—">Overview / Home</a></div>
+  <div class="rail-module"><a href="module-01-foundations.html" data-n="01">Foundations &amp; Feature Engineering</a></div>
+  <div class="rail-module"><a href="module-02-regression.html" data-n="02">Regression &amp; Optimization</a></div>
+  <div class="rail-module"><a href="module-03-classification.html" data-n="03">Classification Algorithms</a></div>
+  <div class="rail-module"><a href="module-04-tuning-ensemble.html" data-n="04">Tuning &amp; Ensemble Learning</a></div>
+  <div class="rail-module"><a href="module-05-unsupervised-nlp.html" data-n="05">Unsupervised Learning &amp; NLP</a></div>
+  <div class="rail-module"><a href="module-06-deep-learning-1.html" data-n="06">Deep Learning I — ANN</a></div>
+  <div class="rail-module"><a href="module-07-cnn.html" data-n="07">Deep Learning II — CNN</a></div>
+  <div class="rail-module"><a href="module-08-rnn.html" data-n="08">Deep Learning III — RNN / LSTM / GRU</a></div>
+  <div class="rail-module"><a href="module-09-transformers.html" class="active" data-n="09">Deep Learning IV — Transformers</a></div>
+  <div class="rail-module"><a href="module-10-summary.html" data-n="10">Full Roadmap Summary</a></div>
+
+  <div class="rail-note">On this page: seq2seq &amp; the context vector bottleneck · attention · embeddings · Query/Key/Value · full transformer architecture · multi-head attention · positional encoding · autoregressive vs. non-autoregressive.</div>
+</nav>
+<div class="main">
+  <div class="topbar"><span>MODULE 09 / 10</span><a href="index.html">← All modules</a></div>
+  <div class="content">
+    <div class="eyebrow">Module 09 · Deep Learning</div>
+    <h1 class="page-title">Deep Learning IV — Transformers</h1>
+    <p class="page-dek">LSTMs fixed vanishing gradients but still process a sequence one step at a time —
+    slow, and still lossy over very long ranges. The Transformer architecture (2017, <em>"Attention Is All
+    You Need"</em>) removes recurrence entirely and is the foundation behind every modern LLM.</p>
+
+    <section class="topic" id="seq2seq">
+      <h2 class="topic-title"><span class="tnum">9.1</span> Sequence-to-Sequence Models &amp; the Context Vector</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        A Seq2Seq model maps an input sequence to an output sequence of possibly different length (e.g.
+        translating a 5-word English sentence into a 7-word French one). The classic (pre-Transformer)
+        design uses two RNNs/LSTMs: an <strong>encoder</strong> that reads the whole input and compresses it
+        into a single fixed-size vector, and a <strong>decoder</strong> that generates the output from that vector.
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 520 150" xmlns="http://www.w3.org/2000/svg">
+          <g font-family="IBM Plex Mono" font-size="10">
+          <rect x="10" y="45" width="150" height="50" rx="4" fill="#E4F1EE" stroke="#1F7A6C"/>
+          <text x="85" y="65" text-anchor="middle">Encoder</text><text x="85" y="80" text-anchor="middle" font-size="8.5">(reads input sequence)</text>
+          <circle cx="250" cy="70" r="26" fill="#FBF0E1" stroke="#B2661E" stroke-width="2"/>
+          <text x="250" y="66" text-anchor="middle" font-size="8.5">context</text><text x="250" y="78" text-anchor="middle" font-size="8.5">vector</text>
+          <rect x="350" y="45" width="150" height="50" rx="4" fill="#FAECE9" stroke="#AC4638"/>
+          <text x="425" y="65" text-anchor="middle">Decoder</text><text x="425" y="80" text-anchor="middle" font-size="8.5">(generates output sequence)</text>
+          <line x1="160" y1="70" x2="222" y2="70" stroke="#8992A6" marker-end="url(#a4)"/>
+          <line x1="278" y1="70" x2="347" y2="70" stroke="#8992A6" marker-end="url(#a4)"/>
+          </g>
+          <defs><marker id="a4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#8992A6"/></marker></defs>
+        </svg>
+        <figcaption>The context vector is the entire input, squeezed through a fixed-size bottleneck — the decoder never sees the original words again, only this compressed summary.</figcaption>
+      </figure>
+
+      <div class="box box-warn">
+        <div class="box-title">The problem: the context vector is a bottleneck</div>
+        Squeezing an entire sentence — or paragraph — into one fixed-size vector loses information, and the
+        problem gets worse the longer the input is. By the time the decoder is generating word 20, it's
+        working from a blurry summary of everything, with no way to "look back" at exactly which input word
+        mattered most for the word it's generating right now. This was the direct motivation for attention.
+      </div>
+    </section>
+
+    <section class="topic" id="attention">
+      <h2 class="topic-title"><span class="tnum">9.2</span> The Attention Mechanism</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Instead of forcing the decoder to rely on one fixed summary, attention lets it look back at
+        <strong>every</strong> input position at every generation step, and learn <strong>how much weight
+        to place on each one</strong> for the specific word it's currently producing.
+      </div>
+      <p>Example: translating "The cat sat on the mat" → when generating the French word for "cat", attention
+      lets the model assign high weight to "cat" and low weight to "mat", "sat", etc. — directly, without
+      routing everything through one compressed vector first.</p>
+    </section>
+
+    <section class="topic" id="embeddings">
+      <h2 class="topic-title"><span class="tnum">9.3</span> Embeddings</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        An embedding is a dense vector of real numbers that represents a token (word/sub-word) such that
+        semantically similar tokens end up close together in vector space — a major upgrade over the
+        one-hot/BoW/TF-IDF vectors from Module 05, which treat every word as equally unrelated to every other word.
+      </div>
+      <p>Embeddings are <strong>learned</strong> during training (or pretrained separately, e.g. Word2Vec,
+      GloVe) — the model discovers that "king" and "queen" should sit near each other, and famously that
+      vector arithmetic like <code>king − man + woman ≈ queen</code> often holds approximately true.</p>
+      <pre class="code">tf.keras.layers.Embedding(input_dim=<span class="s">vocab_size</span>, output_dim=<span class="s">256</span>)</pre>
+    </section>
+
+    <section class="topic" id="transformer-architecture">
+      <h2 class="topic-title"><span class="tnum">9.4</span> The Transformer Architecture</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        The Transformer keeps the encoder-decoder idea from Seq2Seq but replaces recurrence entirely with
+        <strong>self-attention</strong>, letting it process every position in a sequence <em>in parallel</em>
+        instead of one step at a time — much faster to train, and much better at long-range dependencies.
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
+          <g font-family="IBM Plex Mono" font-size="9.5">
+          <!-- encoder stack -->
+          <rect x="30" y="30" width="180" height="230" rx="4" fill="none" stroke="#1F7A6C" stroke-width="1.5" stroke-dasharray="3,2"/>
+          <text x="120" y="20" text-anchor="middle" fill="#1F7A6C" font-weight="700">ENCODER</text>
+          <rect x="50" y="45" width="140" height="34" rx="3" fill="#E4F1EE" stroke="#1F7A6C"/><text x="120" y="66" text-anchor="middle">Input Embedding</text>
+          <rect x="50" y="88" width="140" height="30" rx="3" fill="#E4F1EE" stroke="#1F7A6C"/><text x="120" y="107" text-anchor="middle" font-size="8.5">+ Positional Encoding</text>
+          <rect x="50" y="128" width="140" height="34" rx="3" fill="#E4F1EE" stroke="#1F7A6C"/><text x="120" y="149" text-anchor="middle" font-size="8.5">Multi-Head Self-Attention</text>
+          <rect x="50" y="172" width="140" height="26" rx="3" fill="#fff" stroke="#8992A6"/><text x="120" y="189" text-anchor="middle" font-size="8">Add &amp; Norm</text>
+          <rect x="50" y="206" width="140" height="30" rx="3" fill="#E4F1EE" stroke="#1F7A6C"/><text x="120" y="225" text-anchor="middle" font-size="8.5">Feed Forward NN</text>
+          <rect x="50" y="240" width="140" height="20" rx="3" fill="#fff" stroke="#8992A6"/><text x="120" y="254" text-anchor="middle" font-size="8">Add &amp; Norm</text>
+
+          <!-- decoder stack -->
+          <rect x="310" y="10" width="180" height="280" rx="4" fill="none" stroke="#AC4638" stroke-width="1.5" stroke-dasharray="3,2"/>
+          <text x="400" y="0" text-anchor="middle" fill="#AC4638" font-weight="700" dy="10">DECODER</text>
+          <rect x="330" y="35" width="140" height="30" rx="3" fill="#FAECE9" stroke="#AC4638"/><text x="400" y="54" text-anchor="middle" font-size="8.5">Output Embedding</text>
+          <rect x="330" y="72" width="140" height="26" rx="3" fill="#FAECE9" stroke="#AC4638"/><text x="400" y="89" text-anchor="middle" font-size="8">+ Positional Encoding</text>
+          <rect x="330" y="105" width="140" height="32" rx="3" fill="#FAECE9" stroke="#AC4638"/><text x="400" y="125" text-anchor="middle" font-size="7.8">Masked Multi-Head Attention</text>
+          <rect x="330" y="144" width="140" height="34" rx="3" fill="#FAECE9" stroke="#AC4638"/><text x="400" y="163" text-anchor="middle" font-size="7.8">Encoder-Decoder Attention</text>
+          <rect x="330" y="185" width="140" height="30" rx="3" fill="#FAECE9" stroke="#AC4638"/><text x="400" y="204" text-anchor="middle" font-size="8.5">Feed Forward NN</text>
+          <rect x="330" y="222" width="140" height="28" rx="3" fill="#1B1D22"/><text x="400" y="240" text-anchor="middle" font-size="8.5" fill="#fff">Linear + Softmax</text>
+          <line x1="210" y1="150" x2="325" y2="160" stroke="#8992A6" marker-end="url(#a5)"/>
+          </g>
+          <defs><marker id="a5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#8992A6"/></marker></defs>
+        </svg>
+        <figcaption>One encoder block and one decoder block (real transformers stack N of each, typically 6–96+).
+        The encoder's output feeds into every decoder block via encoder-decoder attention.</figcaption>
+      </figure>
+
+      <h3>Steps, end to end</h3>
+      <ol>
+        <li><strong>Tokenize</strong> the input text into sub-word tokens.</li>
+        <li><strong>Embed</strong> each token into a dense vector.</li>
+        <li>Add <strong>positional encoding</strong> — a pattern of sine/cosine values (or learned vectors) added to each embedding, since self-attention itself has no built-in notion of word order.</li>
+        <li>Pass through N <strong>encoder blocks</strong>, each doing multi-head self-attention followed by a feed-forward network, with residual ("Add") connections and layer normalization ("Norm") around each.</li>
+        <li>The decoder generates output tokens one at a time, using <strong>masked</strong> self-attention (a token can't attend to future tokens it hasn't generated yet) plus attention over the encoder's output.</li>
+        <li>A final linear layer + softmax converts the decoder's output vector into a probability distribution over the vocabulary — the next predicted token.</li>
+      </ol>
+
+      <div class="box box-tip">
+        <div class="box-title">Why positional encoding, layer norm &amp; residual connections matter</div>
+        Self-attention treats a sequence as an unordered <em>set</em> unless position is injected explicitly
+        — hence positional encoding. Residual ("skip") connections let gradients bypass a block entirely
+        during backprop, directly fighting the vanishing gradient problem in very deep stacks (Module 06).
+        Layer normalization stabilizes the scale of activations between blocks, making deep stacks trainable.
+      </div>
+    </section>
+
+    <section class="topic" id="qkv">
+      <h2 class="topic-title"><span class="tnum">9.5</span> Query, Key, Value &amp; Self-Attention</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        Self-attention computes, for every token, three vectors — a <strong>Query</strong> (what am I looking
+        for?), a <strong>Key</strong> (what do I contain?), and a <strong>Value</strong> (what information do
+        I actually offer?) — all as learned linear projections of the same input embedding.
+      </div>
+
+      <div class="math">
+        Attention(Q, K, V) = softmax( Q·Kᵀ / √dₖ ) · V
+        <div class="step">Q·Kᵀ — every query is compared (dot product) against every key, producing a
+        similarity score between every pair of tokens.</div>
+        <div class="step">/ √dₖ — scaling to keep gradients stable (dₖ = dimension of the key vectors).</div>
+        <div class="step">softmax — converts scores into attention weights that sum to 1 per query.</div>
+        <div class="step">· V — the final output is a weighted sum of all Value vectors, weighted by how relevant each token is to this query.</div>
+      </div>
+
+      <p><strong>Intuition:</strong> think of it like a search engine. The Query is your search term, the
+      Keys are the index terms of every document, and the Values are the actual document contents. You match
+      your query against every key to get relevance scores, then combine document contents weighted by relevance.</p>
+
+      <h3>Multi-Head Attention</h3>
+      <p>Instead of computing attention once, the model runs several attention "heads" in parallel, each with
+      its own learned Q/K/V projections — one head might learn to track grammatical structure, another might
+      track coreference (which noun a pronoun refers to). Their outputs are concatenated and combined.</p>
+
+      <pre class="code"><span class="k">import</span> torch.nn <span class="k">as</span> nn
+attn = nn.MultiheadAttention(embed_dim=<span class="s">512</span>, num_heads=<span class="s">8</span>)
+output, weights = attn(query, key, value)</pre>
+      <p>Official reference for the original architecture: <a href="https://arxiv.org/abs/1706.03762" target="_blank">"Attention Is All You Need" (Vaswani et al., 2017)</a>.</p>
+    </section>
+
+    <section class="topic" id="ffn">
+      <h2 class="topic-title"><span class="tnum">9.6</span> The Feed-Forward Network (inside each block)</h2>
+      <div class="box box-def">
+        <div class="box-title">Definition</div>
+        After attention mixes information <em>across</em> tokens, each token's resulting vector is passed
+        through the same small feed-forward network (two dense layers with a ReLU/GELU in between) —
+        independently, position by position — adding extra representational capacity per token.
+      </div>
+      <div class="math">FFN(x) = max(0, x·W₁ + b₁)·W₂ + b₂</div>
+    </section>
+
+    <section class="topic" id="autoregressive">
+      <h2 class="topic-title"><span class="tnum">9.7</span> Autoregressive vs. Non-Autoregressive Generation</h2>
+      <div class="box box-def">
+        <div class="box-title">Autoregressive (AR)</div>
+        Generates output tokens <strong>one at a time</strong>, each new token conditioned on all previously
+        generated tokens (this is how GPT-style models write text — predict the next word, append it,
+        repeat). Accurate and coherent, but inherently sequential and slower at inference.
+      </div>
+      <div class="box box-def">
+        <div class="box-title">Non-Autoregressive (NAR)</div>
+        Generates all output tokens <strong>in parallel</strong> in one shot, trading some accuracy/coherence
+        for a large speed-up — used in some fast translation and speech synthesis systems where latency matters most.
+      </div>
+      <table>
+        <tr><th></th><th>Autoregressive</th><th>Non-Autoregressive</th></tr>
+        <tr><td>Speed at inference</td><td>Slower (sequential)</td><td>Much faster (parallel)</td></tr>
+        <tr><td>Quality</td><td>Generally higher, more coherent</td><td>Can be lower without extra techniques</td></tr>
+        <tr><td>Used by</td><td>GPT family, most modern LLMs</td><td>Some real-time translation/speech systems</td></tr>
+      </table>
+
+      <div class="check">
+        <div class="box-title">Check your understanding</div>
+        Why does the decoder need <em>masked</em> self-attention but the encoder doesn't?
+        <em>(Answer: the encoder sees the full input at once — there's nothing to hide. The decoder generates
+        output one token at a time and, during training, must not be allowed to "see" future tokens it
+        hasn't generated yet — masking blocks attention to future positions so training matches how the model
+        actually generates at inference time.)</em>
+      </div>
+    </section>
+
+    <div class="module-nav">
+      <a href="module-08-rnn.html"><span class="lbl">Back</span>Module 08</a>
+      <a href="module-10-summary.html" style="text-align:right;"><span class="lbl">Next</span>Full Roadmap Summary →</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<a href="https://buymemomo.com/vabin" class="momo-widget">
+  <img src="https://buymemomo.com/logo.png" alt="Buy me a momo" title="Buy me a momo">
+  <span class="momo-text">Buy me a momo</span>
+</a>
+</body>
+</html>
